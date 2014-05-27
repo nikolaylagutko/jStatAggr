@@ -1,7 +1,18 @@
+buildscript {
+	repositories {
+		mavenCentral() 
+	}
+	
+	dependencies {
+		classpath group: 'nl.javadude.gradle.plugins',	name: 'license-gradle-plugin', version: gradleLicenseVersion
+	}
+}
+
 subprojects {
 	apply plugin: 'java'
 	apply plugin: 'groovy'
 	apply plugin: 'eclipse'
+	apply plugin: 'license'
 	
 	sourceCompatibility = 1.8
 	targetCompatibility = 1.8
@@ -17,6 +28,10 @@ subprojects {
 		testCompile group: 'org.codehaus.groovy',	name: 'groovy-all',			version: groovyVersion
 		testCompile group: 'org.spockframework',	name: 'spock-core',			version: spockVersion
 		testCompile group: 'ch.qos.logback',		name: 'logback-classic',	version: logbackVersion
+	}
+	
+	license {
+		header rootProject.file("LICENSE")
 	}
 }
 
