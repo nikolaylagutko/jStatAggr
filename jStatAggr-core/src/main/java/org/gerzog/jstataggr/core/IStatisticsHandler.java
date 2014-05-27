@@ -16,11 +16,16 @@
 package org.gerzog.jstataggr.core;
 
 /**
- * @author Nikolay Lagutko (nikolay.lagutko@mail.com)
+ * Main entry point to handle Statistics. Updates aggregated statistics data for
+ * each annotated class.
  *
+ * @author Nikolay Lagutko (nikolay.lagutko@mail.com)
  */
 public interface IStatisticsHandler {
 
+	/**
+	 * Updates aggregated data based on entry class annotations
+	 */
 	void handleStatistics(Object statisticsEntry);
 
 }
