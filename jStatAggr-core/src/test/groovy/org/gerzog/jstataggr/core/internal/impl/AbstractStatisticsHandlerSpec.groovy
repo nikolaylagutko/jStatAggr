@@ -1,8 +1,8 @@
 package org.gerzog.jstataggr.core.internal.impl
 
 import org.gerzog.jstataggr.core.IStatisticsHandler
+import org.gerzog.jstataggr.core.IStatisticsManager;
 import org.gerzog.jstataggr.core.annotations.StatisticsEntry
-import org.gerzog.jstataggr.core.internal.IStatisticsManager
 import org.gerzog.jstataggr.core.internal.impl.AbstractStatisticsHandler
 
 import spock.lang.Specification

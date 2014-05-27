@@ -1,4 +1,4 @@
-package org.gerzog.jstataggr.core.internal;
+package org.gerzog.jstataggr.core;
 
 /**
  * @author Nikolay Lagutko (nikolay.lagutko@mail.com)

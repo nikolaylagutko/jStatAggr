@@ -5,8 +5,8 @@ import static org.apache.commons.lang3.Validate.notNull;
 
 import org.apache.commons.lang3.StringUtils;
 import org.gerzog.jstataggr.core.IStatisticsHandler;
+import org.gerzog.jstataggr.core.IStatisticsManager;
 import org.gerzog.jstataggr.core.annotations.StatisticsEntry;
-import org.gerzog.jstataggr.core.internal.IStatisticsManager;
 
 /**
  * Abstract implementation of Statistcs Handler
