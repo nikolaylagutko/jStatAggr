@@ -1,0 +1,25 @@
+subprojects {
+	apply plugin: 'java'
+	apply plugin: 'groovy'
+	apply plugin: 'eclipse'
+	
+	sourceCompatibility = 1.8
+	targetCompatibility = 1.8
+	
+	repositories {
+		mavenCentral()
+	}	
+	
+	dependencies {
+		compile group: 'org.slf4j',	name: 'slf4j-nop',	version: slf4jVersion
+		
+		testCompile group: 'junit',					name: 'junit-dep',			version: junitVersion
+		testCompile group: 'org.codehaus.groovy',	name: 'groovy-all',			version: groovyVersion
+		testCompile group: 'org.spockframework',	name: 'spock-core',			version: spockVersion
+		testCompile group: 'ch.qos.logback',		name: 'logback-classic',	version: logbackVersion
+	}
+}
+
+task wrapper(type: Wrapper) {
+	gradleVersion = gradleWrapperVersion
+}

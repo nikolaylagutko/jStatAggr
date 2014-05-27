@@ -1,0 +1,3 @@
+dependencies {
+	compile group: 'org.javassist',	name: 'javassist', version: javassistVersion
+}

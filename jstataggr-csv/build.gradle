@@ -1,0 +1,3 @@
+dependencies {
+	compile group: 'net.sf.supercsv', name: 'super-csv', version: supercsvVersion
+}
