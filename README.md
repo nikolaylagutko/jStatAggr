@@ -1,4 +1,1 @@
-jStatAggr
-=========
-
 Statistics Aggregator
