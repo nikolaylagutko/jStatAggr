@@ -85,4 +85,15 @@ class AsyncStatisticsHandlerSpec extends Specification {
 		then:
 		1 * executor.submit(action)
 	}
+
+	def "check executor stopped on shutdown"() {
+		setup:
+		handler.updateExecutor = executor
+
+		when:
+		handler.shutdown()
+
+		then:
+		1 * executor.shutdown()
+	}
 }
