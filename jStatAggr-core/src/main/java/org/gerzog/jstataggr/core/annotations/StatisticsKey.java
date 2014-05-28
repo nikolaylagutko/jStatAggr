@@ -24,8 +24,8 @@ import java.lang.annotation.Target;
 /**
  * Marks a field to be a part of Statistics Key.
  *
- * This mean that values of non-key field will be grouped by values of key
- * fields.
+ * This mean that values of non-key field will be unique along the portion of
+ * statistics data
  *
  * @author Nikolay Lagutko (nikolay.lagutko@mail.com)
  *
