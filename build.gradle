@@ -25,7 +25,6 @@ subprojects {
 		testCompile group: 'junit',					name: 'junit-dep',			version: junitVersion
 		testCompile group: 'org.codehaus.groovy',	name: 'groovy-all',			version: groovyVersion
 		testCompile group: 'org.spockframework',	name: 'spock-core',			version: spockVersion
-		testCompile group: 'ch.qos.logback',		name: 'logback-classic',	version: logbackVersion
 		testCompile group: 'cglib',					name: 'cglib-nodep',		version: cglibVersion
 	}
 	
