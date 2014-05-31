@@ -16,12 +16,30 @@
 package org.gerzog.jstataggr.core;
 
 /**
- * @author Nikolay Lagutko (nikolay.lagutko@mail.com)
+ * Type of field Aggregation
  *
+ * @author Nikolay Lagutko (nikolay.lagutko@mail.com)
  */
-public interface IStatisticsManager {
-
-	void updateStatistics(Object statisticsEntry, Class<?> statisticsClass,
-			String statisticsName);
-
+public enum AggregationType {
+	/*
+	 * Will be aggregated only count of events (in case of array/collections
+	 * it will be called corresponding method)
+	 */
+	COUNT,
+	/*
+	 * Will be aggregated maximal value of field
+	 */
+	MAX,
+	/*
+	 * Will be aggregated minimal value of field
+	 */
+	MIN,
+	/*
+	 * Will be aggregated average value of field
+	 */
+	AVERAGE,
+	/*
+	 * Will be aggregated sum of all values for this field
+	 */
+	SUM;
 }
