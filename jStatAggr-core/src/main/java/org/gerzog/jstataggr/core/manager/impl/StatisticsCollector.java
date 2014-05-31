@@ -15,6 +15,8 @@
  */
 package org.gerzog.jstataggr.core.manager.impl;
 
+import static org.gerzog.jstataggr.core.utils.Throwables.propogate;
+
 import java.lang.invoke.MethodHandle;
 import java.lang.reflect.Field;
 import java.util.Arrays;
@@ -24,12 +26,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import javassist.CannotCompileException;
 import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.CtField;
 import javassist.CtMethod;
-import javassist.NotFoundException;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -61,13 +61,16 @@ public class StatisticsCollector {
 			this.className = className;
 		}
 
-		public StatisticsCollectorBuilder addStatisticsKey(final Field field, final MethodHandle getter) {
+		public StatisticsCollectorBuilder addStatisticsKey(final Field field,
+				final MethodHandle getter) {
 			statisticsKeys.put(field, getter);
 
 			return this;
 		}
 
-		public StatisticsCollectorBuilder addAggregation(final Field field, final AggregationType[] aggregationTypes, final MethodHandle getter) {
+		public StatisticsCollectorBuilder addAggregation(final Field field,
+				final AggregationType[] aggregationTypes,
+				final MethodHandle getter) {
 			aggregations.put(field, getter);
 			this.aggregationTypes.put(field, Arrays.asList(aggregationTypes));
 
@@ -75,7 +78,8 @@ public class StatisticsCollector {
 		}
 
 		public StatisticsCollector build() {
-			result.classInfo = generateClassInfo(className, statisticsKeys, aggregations, aggregationTypes);
+			result.classInfo = generateClassInfo(className, statisticsKeys,
+					aggregations, aggregationTypes);
 
 			return result;
 		}
@@ -98,10 +102,15 @@ public class StatisticsCollector {
 
 	}
 
-	protected static CollectorClassInfo generateClassInfo(final String className, final Map<Field, MethodHandle> statisticsKeys, final Map<Field, MethodHandle> aggregations, final Map<Field, List<AggregationType>> aggregationTypes) {
+	protected static CollectorClassInfo generateClassInfo(
+			final String className,
+			final Map<Field, MethodHandle> statisticsKeys,
+			final Map<Field, MethodHandle> aggregations,
+			final Map<Field, List<AggregationType>> aggregationTypes) {
 		final ClassPool pool = ClassPool.getDefault();
 
-		final CtClass clazz = pool.makeClass(PACKAGE_PREFIX + StringUtils.capitalize(className));
+		final CtClass clazz = pool.makeClass(PACKAGE_PREFIX
+				+ StringUtils.capitalize(className));
 
 		addProperties(clazz, statisticsKeys.keySet(), pool);
 		addProperties(clazz, aggregations.keySet(), pool);
@@ -110,64 +119,78 @@ public class StatisticsCollector {
 		return null;
 	}
 
-	protected static void addProperties(final CtClass clazz, final Set<Field> fields, final ClassPool pool) {
+	protected static void addProperties(final CtClass clazz,
+			final Set<Field> fields, final ClassPool pool) {
 		fields.forEach(field -> addProperty(clazz, field, pool));
 	}
 
-	protected static void addUpdaters(final CtClass clazz, final Set<Field> fields, final Map<Field, List<AggregationType>> aggregations, final ClassPool pool) {
+	protected static void addUpdaters(final CtClass clazz,
+			final Set<Field> fields,
+			final Map<Field, List<AggregationType>> aggregations,
+			final ClassPool pool) {
 		fields.forEach(field -> {
-			aggregations.get(field).forEach(aggregation -> {
-				switch (aggregation) {
-				case MIN:
-				case MAX:
-				case SUM:
-					addSimpleUpdater(clazz, field, aggregation, pool);
-					break;
-				default:
-					throw new UnsupportedOperationException("Updater for <" + aggregation + "> aggregation type is not implemented yet");
-				}
-			});
+			aggregations
+					.get(field)
+					.forEach(
+					aggregation -> {
+						switch (aggregation) {
+						case MIN:
+						case MAX:
+						case SUM:
+							addSimpleUpdater(clazz, field, aggregation,
+									pool);
+							break;
+						default:
+							throw new UnsupportedOperationException(
+									"Updater for <"
+											+ aggregation
+											+ "> aggregation type is not implemented yet");
+						}
+					});
 		});
 	}
 
-	protected static void addSimpleUpdater(final CtClass clazz, final Field field, final AggregationType aggregation, final ClassPool pool) {
-		try {
-			final CtMethod updater = CtMethod.make(TemplateHelper.simpleUpdater(field.getName(), field.getType(), aggregation), clazz);
+	protected static void addSimpleUpdater(final CtClass clazz,
+			final Field field, final AggregationType aggregation,
+			final ClassPool pool) {
+		propogate(() -> {
+			final CtMethod updater = CtMethod.make(
+					TemplateHelper.simpleUpdater(field.getName(),
+							field.getType(), aggregation), clazz);
 
 			clazz.addMethod(updater);
-		} catch (final CannotCompileException e) {
-			throw new RuntimeException(e);
-		}
+		});
 	}
 
-	protected static void addProperty(final CtClass clazz, final Field field, final ClassPool pool) {
-		try {
+	protected static void addProperty(final CtClass clazz, final Field field,
+			final ClassPool pool) {
+		propogate(() -> {
 			final CtClass type = pool.getCtClass(field.getType().getName());
 
 			final CtField ctField = new CtField(type, field.getName(), clazz);
 			clazz.addField(ctField);
 
-			final CtMethod getter = CtMethod.make(TemplateHelper.getter(field.getName(), field.getType()), clazz);
-			final CtMethod setter = CtMethod.make(TemplateHelper.setter(field.getName(), field.getType()), clazz);
+			final CtMethod getter = CtMethod.make(
+					TemplateHelper.getter(field.getName(), field.getType()),
+					clazz);
+			final CtMethod setter = CtMethod.make(
+					TemplateHelper.setter(field.getName(), field.getType()),
+					clazz);
 
 			clazz.addMethod(getter);
 			clazz.addMethod(setter);
-		} catch (final NotFoundException | CannotCompileException e) {
-			throw new RuntimeException(e);
-		}
+		});
 	}
 
 	public void updateStatistics(final Object statisticsData) {
 		final Object statisticsPiece = getStatisticsPiece(statisticsData);
 
 		classInfo.statisticsUpdaters.forEach(handles -> {
-			try {
+			propogate(() -> {
 				final Object value = handles.getLeft().invoke(statisticsData);
 
 				handles.getRight().invoke(statisticsPiece, value);
-			} catch (final Throwable e) {
-				throw new RuntimeException(e);
-			}
+			});
 		});
 	}
 
@@ -187,37 +210,32 @@ public class StatisticsCollector {
 		final StatisticsKeyBuilder builder = new StatisticsKeyBuilder();
 
 		classInfo.statisticsKeyHandles.forEach((name, handles) -> {
-			try {
+			propogate(() -> {
 				final Object value = handles.getLeft().invoke(statisticsData);
 
 				builder.withParameter(name, value);
-			} catch (final Throwable e) {
-				throw new RuntimeException(e);
-			}
+			});
 		});
 
 		return builder.build();
 	}
 
-	protected Object generateStatisticsCollector(final StatisticsKey key, final Object statisticsData) {
-		try {
+	protected Object generateStatisticsCollector(final StatisticsKey key,
+			final Object statisticsData) {
+		return propogate(() -> {
 			final Object result = classInfo.collectorClass.newInstance();
 
 			classInfo.statisticsKeyHandles.forEach((name, handles) -> {
-				try {
+				propogate(() -> {
 					final Object value = key.get(name);
 
 					handles.getRight().invoke(result, value);
-				} catch (final Throwable e) {
-					throw new RuntimeException();
-				}
+				});
 			});
 
 			final Object existing = statistics.putIfAbsent(key, result);
 
 			return existing == null ? result : existing;
-		} catch (InstantiationException | IllegalAccessException e) {
-			throw new RuntimeException(e);
-		}
+		});
 	}
 }

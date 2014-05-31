@@ -15,7 +15,7 @@
  */
 package org.gerzog.jstataggr.core.functions
 
-import org.gerzog.jstataggr.core.AggregationType;
+import org.gerzog.jstataggr.core.AggregationType
 
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -61,7 +61,7 @@ class FunctionHelperSpec extends Specification {
 
 	def "check AVERAGE function for long apply()"() {
 		when:
-		FunctionHelper.apply(AggregationType.AVERAGE, 0, 0)
+		FunctionHelper.apply(AggregationType.AVERAGE, 0l, 0l)
 
 		then:
 		thrown(IllegalStateException)
@@ -69,7 +69,7 @@ class FunctionHelperSpec extends Specification {
 
 	def "check COUNT function for long apply()"() {
 		when:
-		FunctionHelper.apply(AggregationType.COUNT, 0, 0)
+		FunctionHelper.apply(AggregationType.COUNT, 0l, 0l)
 
 		then:
 		thrown(IllegalStateException)

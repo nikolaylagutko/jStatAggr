@@ -15,7 +15,8 @@
  */
 package org.gerzog.jstataggr.core.manager.impl;
 
-import java.beans.IntrospectionException;
+import static org.gerzog.jstataggr.core.utils.Throwables.propogate;
+
 import java.beans.PropertyDescriptor;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -95,14 +96,12 @@ public class StatisticsManagerImpl implements IStatisticsManager {
 
 	protected MethodHandle findGetter(final Class<?> statisticsClass,
 			final Field field) {
-		try {
+		return propogate(() -> {
 			final Method readMethod = new PropertyDescriptor(field.getName(),
 					statisticsClass).getReadMethod();
 
 			return MethodHandles.lookup().unreflect(readMethod);
-		} catch (final IntrospectionException | IllegalAccessException e) {
-			throw new IllegalStateException(
-					"There is no public getter for field <" + field + ">", e);
-		}
+		}, (e) -> new IllegalStateException(
+				"There is no public getter for field <" + field + ">", e));
 	}
 }
