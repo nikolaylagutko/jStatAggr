@@ -39,9 +39,11 @@ abstract class AbstractSampleSpec extends Specification {
 		@Override
 		public void writeStatistics(String statisticsName,
 				Collection<Object> statisticsData) {
-			isCalled = true
-			this.statisticsName = statisticsName
-			this.data = statisticsData
+			if (statisticsName == 'sample_statistics_one') {
+				isCalled = true
+				this.statisticsName = statisticsName
+				this.data = statisticsData
+			}
 		}
 
 		public void verify() {
@@ -56,17 +58,54 @@ abstract class AbstractSampleSpec extends Specification {
 		}
 	}
 
+	class StatisticsTwoVerifier implements IStatisticsWriter {
+
+		private boolean isCalled = false
+
+		private String statisticsName
+
+		private Collection<Object> data
+
+		@Override
+		public void writeStatistics(String statisticsName,
+				Collection<Object> statisticsData) {
+			if (statisticsName == 'sample_statistics_two') {
+				isCalled = true
+				this.statisticsName = statisticsName
+				this.data = statisticsData
+			}
+		}
+
+		public void verify() {
+			assert isCalled
+			assert data.size() == 6
+
+			int size = [0..9].sum().sum()
+
+			data.each {
+				assert it.value1Count == size
+				assert it.value2Count == size
+				assert it.value3Count == 10
+			}
+		}
+	}
+
 	IStatisticsHandler handler
 
 	IStatisticsManager manager
 
 	IStatisticsWriter statisticsOneVerifier = new StatisticsOneVerifier()
 
+	IStatisticsWriter statisticsTwoVerifier = new StatisticsTwoVerifier()
+
 	def setup() {
 		manager = new StatisticsManagerImpl()
 
 		handler = createHandler(manager)
-		handler.statisticsWriters = [statisticsOneVerifier]
+		handler.statisticsWriters = [
+			statisticsOneVerifier,
+			statisticsTwoVerifier
+		]
 	}
 
 	def "check statistics handling"() {
@@ -81,6 +120,7 @@ abstract class AbstractSampleSpec extends Specification {
 		then:
 		noExceptionThrown()
 		statisticsOneVerifier.verify()
+		statisticsTwoVerifier.verify()
 	}
 
 	abstract IStatisticsHandler createHandler(IStatisticsManager manager)
@@ -113,8 +153,30 @@ abstract class AbstractSampleSpec extends Specification {
 		result
 	}
 
-	private List<StatisticsOne> generateStatisticsTwo() {
+	private List<StatisticsTwo> generateStatisticsTwo() {
 		def result = []
+
+		2.times { key1 ->
+			3.times { key2 ->
+				10.times {
+					StatisticsTwo statistics = new StatisticsTwo()
+
+					statistics.key = key1.toString()
+					statistics.anotherKey = key2
+
+					statistics.value1 = new int[it]
+					statistics.value2 = []
+
+					it.times {
+						statistics.value1[it] = it
+						statistics.value2 == null ? statistics.value2 = [it]: statistics.value2 << it
+					}
+					statistics.value3 = it
+
+					result << statistics
+				}
+			}
+		}
 
 		result
 	}

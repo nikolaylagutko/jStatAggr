@@ -15,6 +15,8 @@
  */
 package org.gerzog.jstataggr.sample;
 
+import java.util.List;
+
 import org.gerzog.jstataggr.AggregationType;
 import org.gerzog.jstataggr.annotations.Aggregated;
 import org.gerzog.jstataggr.annotations.StatisticsEntry;
@@ -24,16 +26,16 @@ import org.gerzog.jstataggr.annotations.StatisticsKey;
  * @author Nikolay Lagutko (nikolay.lagutko@mail.com)
  *
  */
-@StatisticsEntry("sample_statistics_one")
+@StatisticsEntry("sample_statistics_two")
 public class StatisticsTwo {
 
-	@Aggregated({ AggregationType.MIN })
-	private int value1;
+	@Aggregated({ AggregationType.COUNT })
+	private int[] value1;
 
-	@Aggregated({ AggregationType.MAX })
-	private int value2;
+	@Aggregated({ AggregationType.COUNT })
+	private List<Integer> value2;
 
-	@Aggregated({ AggregationType.SUM })
+	@Aggregated({ AggregationType.COUNT })
 	private int value3;
 
 	@StatisticsKey
@@ -58,19 +60,19 @@ public class StatisticsTwo {
 		this.anotherKey = anotherKey;
 	}
 
-	public int getValue1() {
+	public int[] getValue1() {
 		return value1;
 	}
 
-	public void setValue1(final int value1) {
+	public void setValue1(final int[] value1) {
 		this.value1 = value1;
 	}
 
-	public int getValue2() {
+	public List<Integer> getValue2() {
 		return value2;
 	}
 
-	public void setValue2(final int value2) {
+	public void setValue2(final List<Integer> value2) {
 		this.value2 = value2;
 	}
 

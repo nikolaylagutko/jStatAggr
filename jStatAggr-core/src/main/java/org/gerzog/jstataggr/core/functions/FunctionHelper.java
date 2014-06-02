@@ -15,6 +15,10 @@
  */
 package org.gerzog.jstataggr.core.functions;
 
+import java.lang.reflect.Array;
+import java.util.Collection;
+import java.util.Map;
+
 import org.gerzog.jstataggr.AggregationType;
 
 /**
@@ -59,5 +63,50 @@ public final class FunctionHelper {
 		default:
 			throw new IllegalArgumentException("Unsupported aggregation type <" + type + ">");
 		}
+	}
+
+	public static long apply(final AggregationType type, final int update, final long current) {
+		switch (type) {
+		case AVERAGE:
+			throw new IllegalStateException("Method apply() for Object didn's support COUNT type.");
+		case COUNT:
+			return current + getCount(update);
+		case MAX:
+			throw new IllegalStateException("Method apply() for long didn's support MAX type.");
+		case MIN:
+			throw new IllegalStateException("Method apply() for long didn's support MIN type.");
+		case SUM:
+			throw new IllegalStateException("Method apply() for long didn's support SUM type.");
+		default:
+			throw new IllegalArgumentException("Unsupported aggregation type <" + type + ">");
+		}
+	}
+
+	public static long apply(final AggregationType type, final Object update, final long current) {
+		switch (type) {
+		case AVERAGE:
+			throw new IllegalStateException("Method apply() for Object didn's support COUNT type.");
+		case COUNT:
+			return current + getCount(update);
+		case MAX:
+			throw new IllegalStateException("Method apply() for long didn's support MAX type.");
+		case MIN:
+			throw new IllegalStateException("Method apply() for long didn's support MIN type.");
+		case SUM:
+			throw new IllegalStateException("Method apply() for long didn's support SUM type.");
+		default:
+			throw new IllegalArgumentException("Unsupported aggregation type <" + type + ">");
+		}
+	}
+
+	private static int getCount(final Object o) {
+		if (o instanceof Collection<?>) {
+			return ((Collection<?>) o).size();
+		} else if (o.getClass().isArray()) {
+			return Array.getLength(o);
+		} else if (o instanceof Map<?, ?>) {
+			return ((Map<?, ?>) o).size();
+		}
+		return 1;
 	}
 }

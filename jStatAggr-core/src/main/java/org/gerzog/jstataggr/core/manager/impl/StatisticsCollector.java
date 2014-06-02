@@ -22,12 +22,10 @@ import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javassist.ClassPool;
@@ -53,37 +51,98 @@ public class StatisticsCollector {
 
 	private static final String PACKAGE_PREFIX = "org.gerzog.jstataggr.core.manager.impl.generated.";
 
+	public static class FieldInfo {
+
+		private final AggregationType aggregation;
+
+		private final Class<?> fieldType;
+
+		private final Class<?> statisticsType;
+
+		private final MethodHandle getterMethod;
+
+		private final boolean isAggregation;
+
+		private final String fieldName;
+
+		public FieldInfo(final String fieldName, final Class<?> fieldType, final MethodHandle getterMethod) {
+			this(fieldName, fieldType, fieldType, null, getterMethod);
+		}
+
+		public FieldInfo(final String fieldName, final Class<?> fieldType, final AggregationType aggregation, final MethodHandle getterMethod) {
+			this(fieldName, fieldType, fieldType, aggregation, getterMethod);
+		}
+
+		public FieldInfo(final String fieldName, final Class<?> fieldType, final Class<?> statisticsType, final AggregationType aggregation, final MethodHandle getterMethod) {
+			this.fieldName = fieldName;
+			this.getterMethod = getterMethod;
+			this.aggregation = aggregation;
+			this.fieldType = fieldType;
+			this.statisticsType = statisticsType;
+			this.isAggregation = aggregation != null;
+		}
+
+		public AggregationType getAggregation() {
+			return aggregation;
+		}
+
+		public Class<?> getFieldType() {
+			return fieldType;
+		}
+
+		public MethodHandle getGetterMethod() {
+			return getterMethod;
+		}
+
+		public boolean isAggregation() {
+			return isAggregation;
+		}
+
+		public Class<?> getStatisticsType() {
+			return statisticsType;
+		}
+
+		public String getFieldName() {
+			return fieldName;
+		}
+
+	}
+
 	public static class StatisticsCollectorBuilder {
 
 		private final String className;
 
 		private final StatisticsCollector result = new StatisticsCollector();
 
-		private final Map<Field, MethodHandle> statisticsKeys = new HashMap<>();
-
-		private final Map<Field, MethodHandle> aggregations = new HashMap<>();
-
-		private final Map<Field, List<AggregationType>> aggregationTypes = new HashMap<>();
+		private final List<FieldInfo> fieldInfo = new ArrayList<>();
 
 		public StatisticsCollectorBuilder(final String className) {
 			this.className = className;
 		}
 
 		public StatisticsCollectorBuilder addStatisticsKey(final Field field, final MethodHandle getter) {
-			statisticsKeys.put(field, getter);
+			fieldInfo.add(new FieldInfo(field.getName(), field.getType(), getter));
 
 			return this;
 		}
 
 		public StatisticsCollectorBuilder addAggregation(final Field field, final AggregationType[] aggregationTypes, final MethodHandle getter) {
-			aggregations.put(field, getter);
-			this.aggregationTypes.put(field, Arrays.asList(aggregationTypes));
+			for (final AggregationType type : aggregationTypes) {
+				switch (type) {
+				case COUNT:
+					fieldInfo.add(new FieldInfo(field.getName(), field.getType(), long.class, type, getter));
+					break;
+				default:
+					fieldInfo.add(new FieldInfo(field.getName(), field.getType(), type, getter));
+					break;
+				}
+			}
 
 			return this;
 		}
 
 		public StatisticsCollector build() {
-			result.classInfo = generateClassInfo(className, statisticsKeys, aggregations, aggregationTypes);
+			result.classInfo = generateClassInfo(className, fieldInfo);
 
 			return result;
 		}
@@ -123,95 +182,82 @@ public class StatisticsCollector {
 
 	}
 
-	protected static CollectorClassInfo generateClassInfo(final String className, final Map<Field, MethodHandle> statisticsKeys, final Map<Field, MethodHandle> aggregations, final Map<Field, List<AggregationType>> aggregationTypes) {
+	protected static CollectorClassInfo generateClassInfo(final String className, final List<FieldInfo> fieldInfo) {
 		final ClassPool pool = ClassPool.getDefault();
 
 		final CtClass clazz = pool.makeClass(PACKAGE_PREFIX + StringUtils.capitalize(className));
 
-		addProperties(clazz, statisticsKeys.keySet(), pool, null);
-		addProperties(clazz, aggregations.keySet(), pool, aggregationTypes);
-		addUpdaters(clazz, aggregations.keySet(), aggregationTypes, pool);
+		fieldInfo.forEach(info -> {
+			addProperty(clazz, info, pool);
 
-		return propogate(() -> generateClassInfo(clazz.toClass(), statisticsKeys, aggregations, aggregationTypes));
-	}
-
-	protected static CollectorClassInfo generateClassInfo(final Class<?> clazz, final Map<Field, MethodHandle> statisticsKeys, final Map<Field, MethodHandle> aggregations, final Map<Field, List<AggregationType>> aggregationTypes) {
-		final CollectorClassInfo result = new CollectorClassInfo(clazz);
-
-		statisticsKeys.forEach((field, handle) -> {
-			propogate(() -> {
-				final String fieldName = field.getName();
-
-				final Method setter = clazz.getMethod(FieldUtils.getSetterName(field), field.getType());
-				final MethodHandle setterHandle = MethodHandles.lookup().unreflect(setter);
-
-				result.getStatisticsKeyHandles().put(fieldName, ImmutablePair.of(handle, setterHandle));
-			});
+			if (info.isAggregation()) {
+				addUpdater(clazz, info, pool);
+			}
 		});
 
-		aggregations.forEach((field, handle) -> {
-			aggregationTypes.get(field).forEach(aggregationType -> {
-				propogate(() -> {
-					final Method updater = clazz.getMethod(FieldUtils.getUpdaterName(field.getName(), aggregationType), field.getType());
-					final MethodHandle updaterHandle = MethodHandles.lookup().unreflect(updater);
+		return propogate(() -> {
+			return generateClassInfo(clazz.toClass(), fieldInfo);
+		});
+	}
 
-					result.getStatisticsUpdaters().add(ImmutablePair.of(handle, updaterHandle));
-				});
+	protected static CollectorClassInfo generateClassInfo(final Class<?> clazz, final List<FieldInfo> fieldInfo) {
+		final CollectorClassInfo result = new CollectorClassInfo(clazz);
+
+		fieldInfo.forEach((info) -> {
+			propogate(() -> {
+				final String fieldName = info.getFieldName();
+				final String methodName = info.isAggregation() ? FieldUtils.getUpdaterName(fieldName, info.getAggregation()) : FieldUtils.getSetterName(info.getFieldName());
+
+				final Method method = clazz.getMethod(methodName, info.getFieldType());
+				final MethodHandle handle = MethodHandles.lookup().unreflect(method);
+
+				if (info.isAggregation()) {
+					result.getStatisticsUpdaters().add(ImmutablePair.of(info.getGetterMethod(), handle));
+				} else {
+					result.getStatisticsKeyHandles().put(fieldName, ImmutablePair.of(info.getGetterMethod(), handle));
+				}
 			});
 		});
 
 		return result;
 	}
 
-	protected static void addProperties(final CtClass clazz, final Set<Field> fields, final ClassPool pool, final Map<Field, List<AggregationType>> aggregationTypes) {
-		fields.forEach(field -> {
-			if (aggregationTypes == null) {
-				addProperty(clazz, field, pool, null);
-			} else {
-				aggregationTypes.get(field).forEach(aggregationType -> addProperty(clazz, field, pool, aggregationType));
-			}
-		});
+	protected static void addUpdater(final CtClass clazz, final FieldInfo field, final ClassPool pool) {
+		switch (field.getAggregation()) {
+		case MIN:
+		case MAX:
+		case SUM:
+		case COUNT:
+			addSimpleUpdater(clazz, field, pool);
+			break;
+		default:
+			throw new UnsupportedOperationException("Updater for <" + field.getAggregation() + "> aggregation type is not implemented yet");
+		}
 	}
 
-	protected static void addUpdaters(final CtClass clazz, final Set<Field> fields, final Map<Field, List<AggregationType>> aggregations, final ClassPool pool) {
-		fields.forEach(field -> {
-			aggregations.get(field).forEach(aggregation -> {
-				switch (aggregation) {
-				case MIN:
-				case MAX:
-				case SUM:
-					addSimpleUpdater(clazz, field, aggregation, pool);
-					break;
-				default:
-					throw new UnsupportedOperationException("Updater for <" + aggregation + "> aggregation type is not implemented yet");
-				}
-			});
-		});
-	}
-
-	protected static void addSimpleUpdater(final CtClass clazz, final Field field, final AggregationType aggregation, final ClassPool pool) {
+	protected static void addSimpleUpdater(final CtClass clazz, final FieldInfo field, final ClassPool pool) {
 		propogate(() -> {
-			final CtMethod updater = CtMethod.make(TemplateHelper.simpleUpdater(field.getName(), field.getType(), aggregation), clazz);
+			final CtMethod updater = CtMethod.make(TemplateHelper.simpleUpdater(field.getFieldName(), field.getFieldType(), field.getAggregation()), clazz);
 
 			clazz.addMethod(updater);
 		});
 	}
 
-	protected static void addProperty(final CtClass clazz, final Field field, final ClassPool pool, final AggregationType aggregationType) {
+	protected static void addProperty(final CtClass clazz, final FieldInfo field, final ClassPool pool) {
 		propogate(() -> {
-			final String fieldName = aggregationType == null ? field.getName() : FieldUtils.getAggregationFieldName(field.getName(), aggregationType);
+			final String fieldName = field.isAggregation() ? FieldUtils.getAggregationFieldName(field.getFieldName(), field.getAggregation()) : field.getFieldName();
 
-			final CtClass type = pool.getCtClass(field.getType().getName());
+			final CtClass type = pool.getCtClass(field.getStatisticsType().getName());
 
 			final CtField ctField = new CtField(type, fieldName, clazz);
-			if (aggregationType != null) {
-				clazz.addField(ctField, InitializerUtils.getInitializer(field.getType(), aggregationType));
+			if (field.isAggregation()) {
+				clazz.addField(ctField, InitializerUtils.getInitializer(field.getStatisticsType(), field.getAggregation()));
 			} else {
 				clazz.addField(ctField);
 			}
 
-			final CtMethod getter = CtMethod.make(TemplateHelper.getter(fieldName, field.getType()), clazz);
-			final CtMethod setter = CtMethod.make(TemplateHelper.setter(fieldName, field.getType()), clazz);
+			final CtMethod getter = CtMethod.make(TemplateHelper.getter(fieldName, field.getStatisticsType()), clazz);
+			final CtMethod setter = CtMethod.make(TemplateHelper.setter(fieldName, field.getStatisticsType()), clazz);
 
 			clazz.addMethod(getter);
 			clazz.addMethod(setter);

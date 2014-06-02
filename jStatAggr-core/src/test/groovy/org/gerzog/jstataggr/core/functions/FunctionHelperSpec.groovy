@@ -15,7 +15,7 @@
  */
 package org.gerzog.jstataggr.core.functions
 
-import org.gerzog.jstataggr.AggregationType;
+import org.gerzog.jstataggr.AggregationType
 
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -90,5 +90,71 @@ class FunctionHelperSpec extends Specification {
 		AggregationType.MIN	| 10	  | 20	   | 10
 		AggregationType.MIN	| 20	  | 10	   | 10
 		AggregationType.SUM	| 10	  | 20	   | 30
+	}
+
+	@Unroll
+	def "check count for object with int result"(Object update, int expectedResult) {
+		when:
+		def output = FunctionHelper.apply(AggregationType.COUNT, update, 0)
+
+		then:
+		output == expectedResult
+
+		where:
+		update 		 		| expectedResult
+		new Object() 		| 1
+		[1, 2, 3].toArray() | 3
+		[1: 1, 2: 2, 3: 3]  | 3
+		[1, 2, 3] as List 	| 3
+	}
+
+	@Unroll
+	def "check apply for object with non-count aggregation"(def aggregationType) {
+		when:
+		FunctionHelper.apply(aggregationType, new Object(), 0)
+
+		then:
+		thrown(IllegalStateException)
+
+		where:
+		aggregationType << [
+			AggregationType.AVERAGE,
+			AggregationType.MAX,
+			AggregationType.MIN,
+			AggregationType.SUM
+		]
+	}
+
+	@Unroll
+	def "check count for object with long result"(Object update, int expectedResult) {
+		when:
+		def output = FunctionHelper.apply(AggregationType.COUNT, update, 0l)
+
+		then:
+		output == expectedResult
+
+		where:
+		update 		 		| expectedResult
+		new Object() 		| 1
+		[1, 2, 3].toArray() | 3
+		[1: 1, 2: 2, 3: 3]  | 3
+		[1, 2, 3] as List 	| 3
+	}
+
+	@Unroll
+	def "check apply for object and long with non-count aggregation"(def aggregationType) {
+		when:
+		FunctionHelper.apply(aggregationType, new Object(), 0l)
+
+		then:
+		thrown(IllegalStateException)
+
+		where:
+		aggregationType << [
+			AggregationType.AVERAGE,
+			AggregationType.MAX,
+			AggregationType.MIN,
+			AggregationType.SUM
+		]
 	}
 }

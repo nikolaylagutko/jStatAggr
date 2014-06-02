@@ -25,7 +25,9 @@ import org.gerzog.jstataggr.AggregationType;
  */
 public final class InitializerUtils {
 
-	private static final int ZERO = 0;
+	private static final int ZERO_INT = 0;
+
+	private static final long ZERO_LONG = 0l;
 
 	private InitializerUtils() {
 
@@ -34,17 +36,18 @@ public final class InitializerUtils {
 	public static Initializer getInitializer(final Class<?> type, final AggregationType aggregation) {
 		switch (aggregation) {
 		case MIN:
-			return getMinInitializer(type);
+			return getMaxValueInitializer(type);
 		case MAX:
-			return getMaxInitializer(type);
+			return getMinValueInitializer(type);
 		case SUM:
-			return getSumInitializer(type);
+		case COUNT:
+			return getZeroInitializer(type);
 		default:
 			throw new IllegalArgumentException("Initializer for <" + aggregation + "> is not yet defined");
 		}
 	}
 
-	private static Initializer getMaxInitializer(final Class<?> type) {
+	private static Initializer getMinValueInitializer(final Class<?> type) {
 		if (type.equals(Integer.class) || type.equals(int.class)) {
 			return Initializer.constant(Integer.MIN_VALUE);
 		} else if (type.equals(Long.class) || type.equals(long.class)) {
@@ -54,7 +57,7 @@ public final class InitializerUtils {
 		throw new IllegalArgumentException("Initialzer for <" + type.getSimpleName() + "> class is not yet defined");
 	}
 
-	private static Initializer getMinInitializer(final Class<?> type) {
+	private static Initializer getMaxValueInitializer(final Class<?> type) {
 		if (type.equals(Integer.class) || type.equals(int.class)) {
 			return Initializer.constant(Integer.MAX_VALUE);
 		} else if (type.equals(Long.class) || type.equals(long.class)) {
@@ -64,11 +67,11 @@ public final class InitializerUtils {
 		throw new IllegalArgumentException("Initialzer for <" + type.getSimpleName() + "> class is not yet defined");
 	}
 
-	private static Initializer getSumInitializer(final Class<?> type) {
+	private static Initializer getZeroInitializer(final Class<?> type) {
 		if (type.equals(Integer.class) || type.equals(int.class)) {
-			return Initializer.constant(ZERO);
+			return Initializer.constant(ZERO_INT);
 		} else if (type.equals(Long.class) || type.equals(long.class)) {
-			return Initializer.constant(ZERO);
+			return Initializer.constant(ZERO_LONG);
 		}
 
 		throw new IllegalArgumentException("Initialzer for <" + type.getSimpleName() + "> class is not yet defined");

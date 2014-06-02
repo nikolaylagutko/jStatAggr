@@ -72,7 +72,7 @@ class TemplateHelperSpec extends Specification {
 		def result = TemplateHelper.simpleUpdaterBody('value', aggregation)
 
 		then:
-		result == "this.value${postfix} = org.gerzog.jstataggr.core.functions.FunctionHelper.apply(org.gerzog.jstataggr.AggregationType.${aggregation.name()}, this.value${postfix}, value);"
+		result == "this.value${postfix} = org.gerzog.jstataggr.core.functions.FunctionHelper.apply(org.gerzog.jstataggr.AggregationType.${aggregation.name()}, value, this.value${postfix});"
 
 		where:
 		aggregation 		| postfix
@@ -91,8 +91,7 @@ class TemplateHelperSpec extends Specification {
 
 		where:
 		aggregation << [
-			AggregationType.AVERAGE,
-			AggregationType.COUNT
+			AggregationType.AVERAGE
 		]
 	}
 
@@ -109,5 +108,23 @@ class TemplateHelperSpec extends Specification {
 		AggregationType.MIN | 'Min'
 		AggregationType.MAX | 'Max'
 		AggregationType.SUM | 'Sum'
+	}
+
+	@Unroll
+	def "check name of type is correct"(def type, def expected) {
+		when:
+		def result = TemplateHelper.getTypeName(type)
+
+		then:
+		result == expected
+
+		where:
+		type 			| expected
+		String.class 	| 'java.lang.String'
+		int.class 		| 'int'
+		List.class 		| 'java.util.List'
+		int[].class 	| 'int[]'
+		String[].class	| 'java.lang.String[]'
+		null			| null
 	}
 }

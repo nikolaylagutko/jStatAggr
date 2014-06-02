@@ -32,14 +32,14 @@ public final class TemplateHelper {
 
 	private static final String AGGREGATION_TYPE_PREFIX = AggregationType.class.getTypeName() + ".";
 
-	private static final AggregationType[] SIMPLE_AGGREGATIONS = { AggregationType.MIN, AggregationType.MAX, AggregationType.SUM };
+	private static final AggregationType[] SIMPLE_AGGREGATIONS = { AggregationType.MIN, AggregationType.MAX, AggregationType.SUM, AggregationType.COUNT };
 
 	private TemplateHelper() {
 
 	}
 
 	public static String getter(final String name, final Class<?> type) {
-		return method(FieldUtils.getGetterName(name, type), type, getterBody(name));
+		return method(FieldUtils.getGetterName(name, type), getTypeName(type), getterBody(name));
 	}
 
 	protected static String getterBody(final String name) {
@@ -50,13 +50,13 @@ public final class TemplateHelper {
 		return builder.toString();
 	}
 
-	protected static String method(final String name, final Class<?> result, final String body, final Object... arguments) {
+	protected static String method(final String name, final String resultType, final String body, final Object... arguments) {
 		final StringBuilder builder = new StringBuilder();
 
 		builder.append("public ");
 
-		if (result != null) {
-			builder.append(result.getName());
+		if (resultType != null) {
+			builder.append(resultType);
 		} else {
 			builder.append("void");
 		}
@@ -66,14 +66,14 @@ public final class TemplateHelper {
 		builder.append("(");
 
 		for (int i = 0; i < (arguments.length / 2); i++) {
-			final Class<?> argType = (Class<?>) arguments[2 * i];
+			final String argType = (String) arguments[2 * i];
 			final String argName = (String) arguments[(2 * i) + 1];
 
 			if (i > 0) {
 				builder.append(", ");
 			}
 
-			builder.append(argType.getName()).append(" ").append(argName);
+			builder.append(argType).append(" ").append(argName);
 		}
 		builder.append(") {").append(body).append("}");
 
@@ -81,7 +81,7 @@ public final class TemplateHelper {
 	}
 
 	public static String setter(final String name, final Class<?> type) {
-		return method(FieldUtils.getSetterName(name), null, setterBody(name), type, name);
+		return method(FieldUtils.getSetterName(name), null, setterBody(name), getTypeName(type), name);
 	}
 
 	protected static String setterBody(final String name) {
@@ -93,7 +93,7 @@ public final class TemplateHelper {
 	}
 
 	public static String simpleUpdater(final String name, final Class<?> type, final AggregationType aggregationType) {
-		return method(FieldUtils.getUpdaterName(name, aggregationType), null, simpleUpdaterBody(name, aggregationType), type, name);
+		return method(FieldUtils.getUpdaterName(name, aggregationType), null, simpleUpdaterBody(name, aggregationType), getTypeName(type), name);
 	}
 
 	protected static String simpleUpdaterBody(final String name, final AggregationType aggregationType) {
@@ -105,8 +105,19 @@ public final class TemplateHelper {
 
 		final String fieldName = FieldUtils.getAggregationFieldName(name, aggregationType);
 
-		builder.append("this.").append(fieldName).append(" = ").append(APPLY_METHOD_PREFIX).append(AGGREGATION_TYPE_PREFIX).append(aggregationType.name()).append(", this.").append(fieldName).append(", ").append(name).append(");");
+		builder.append("this.").append(fieldName).append(" = ").append(APPLY_METHOD_PREFIX).append(AGGREGATION_TYPE_PREFIX).append(aggregationType.name()).append(", ").append(name).append(", this.").append(fieldName).append(");");
 
 		return builder.toString();
+	}
+
+	protected static String getTypeName(final Class<?> type) {
+		if (type == null) {
+			return null;
+		}
+
+		if (type.isArray()) {
+			return getTypeName(type.getComponentType()) + "[]";
+		}
+		return type.getName();
 	}
 }
