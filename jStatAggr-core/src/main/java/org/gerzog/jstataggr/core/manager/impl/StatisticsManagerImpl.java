@@ -45,6 +45,8 @@ public class StatisticsManagerImpl implements IStatisticsManager {
 		if (collector == null) {
 			collector = createCollector(statisticsClass, statisticsName);
 		}
+
+		collector.updateStatistics(statisticsEntry);
 	}
 
 	protected synchronized StatisticsCollector createCollector(final Class<?> statisticsClass, final String statisticsName) {

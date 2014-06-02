@@ -19,9 +19,9 @@ public final class InitializerUtils {
 	public static Initializer getInitializer(final Class<?> type, final AggregationType aggregation) {
 		switch (aggregation) {
 		case MIN:
-			return getMaxInitializer(type);
-		case MAX:
 			return getMinInitializer(type);
+		case MAX:
+			return getMaxInitializer(type);
 		case SUM:
 			return getSumInitializer(type);
 		default:

@@ -45,8 +45,28 @@ abstract class AbstractSampleSpec extends Specification {
 	}
 
 	private List<StatisticsOne> generateStatisticsOne() {
+		int counter = 0
+		def result = []
+
+		2.times { key1 ->
+			3.times { key2 ->
+				10.times {
+					StatisticsOne statistics = new StatisticsOne()
+					statistics.key = key1.toString()
+					statistics.anotherKey = key2.toString()
+					statistics.value = counter++
+
+					result << statistics
+				}
+			}
+		}
+
+		result
 	}
 
 	private List<StatisticsOne> generateStatisticsTwo() {
+		def result = []
+
+		result
 	}
 }
