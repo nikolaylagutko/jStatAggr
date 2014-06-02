@@ -1,1 +1,1 @@
-include 'jStatAggr-core', 'jStatAggr-csv'
+include 'jStatAggr-core', 'jStatAggr-csv', 'jStatAggre-sample'
