@@ -72,7 +72,7 @@ class TemplateHelperSpec extends Specification {
 		def result = TemplateHelper.simpleUpdaterBody('value', aggregation)
 
 		then:
-		result == "org.gerzog.jstataggr.core.functions.FunctionHelper.apply(org.gerzog.jstataggr.AggregationType.${aggregation.name()}, this.value${postfix}, value);"
+		result == "this.value${postfix} = org.gerzog.jstataggr.core.functions.FunctionHelper.apply(org.gerzog.jstataggr.AggregationType.${aggregation.name()}, this.value${postfix}, value);"
 
 		where:
 		aggregation 		| postfix

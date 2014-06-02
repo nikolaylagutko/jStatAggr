@@ -17,6 +17,7 @@ package org.gerzog.jstataggr.sample
 
 import org.gerzog.jstataggr.IStatisticsHandler
 import org.gerzog.jstataggr.IStatisticsManager
+import org.gerzog.jstataggr.IStatisticsWriter
 import org.gerzog.jstataggr.core.manager.impl.StatisticsManagerImpl
 
 import spock.lang.Specification
@@ -27,14 +28,45 @@ import spock.lang.Specification
  */
 abstract class AbstractSampleSpec extends Specification {
 
+	class StatisticsOneVerifier implements IStatisticsWriter {
+
+		private boolean isCalled = false
+
+		private String statisticsName
+
+		private Collection<Object> data
+
+		@Override
+		public void writeStatistics(String statisticsName,
+				Collection<Object> statisticsData) {
+			isCalled = true
+			this.statisticsName = statisticsName
+			this.data = statisticsData
+		}
+
+		public void verify() {
+			assert isCalled
+			assert data.size() == 6
+
+			data.each {
+				assert it.valueMax == 9
+				assert it.valueMin == 0
+				assert it.valueSum == [0..9].sum().sum()
+			}
+		}
+	}
+
 	IStatisticsHandler handler
 
 	IStatisticsManager manager
+
+	IStatisticsWriter statisticsOneVerifier = new StatisticsOneVerifier()
 
 	def setup() {
 		manager = new StatisticsManagerImpl()
 
 		handler = createHandler(manager)
+		handler.statisticsWriters = [statisticsOneVerifier]
 	}
 
 	def "check statistics handling"() {
@@ -43,9 +75,12 @@ abstract class AbstractSampleSpec extends Specification {
 
 		when:
 		values.each { handler.handleStatistics(it) }
+		and:
+		handler.writeStatistics(true)
 
 		then:
 		noExceptionThrown()
+		statisticsOneVerifier.verify()
 	}
 
 	abstract IStatisticsHandler createHandler(IStatisticsManager manager)
@@ -60,7 +95,6 @@ abstract class AbstractSampleSpec extends Specification {
 	}
 
 	private List<StatisticsOne> generateStatisticsOne() {
-		int counter = 0
 		def result = []
 
 		2.times { key1 ->
@@ -69,7 +103,7 @@ abstract class AbstractSampleSpec extends Specification {
 					StatisticsOne statistics = new StatisticsOne()
 					statistics.key = key1.toString()
 					statistics.anotherKey = key2.toString()
-					statistics.value = counter++
+					statistics.value = it
 
 					result << statistics
 				}
