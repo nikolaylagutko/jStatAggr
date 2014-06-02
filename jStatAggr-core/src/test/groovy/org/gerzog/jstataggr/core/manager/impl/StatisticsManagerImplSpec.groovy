@@ -18,6 +18,7 @@ package org.gerzog.jstataggr.core.manager.impl
 import java.lang.invoke.MethodHandle
 
 import org.gerzog.jstataggr.AggregationType
+import org.gerzog.jstataggr.IStatisticsFilter
 import org.gerzog.jstataggr.IStatisticsManager
 import org.gerzog.jstataggr.annotations.Aggregated
 import org.gerzog.jstataggr.annotations.StatisticsEntry
@@ -117,5 +118,33 @@ class StatisticsManagerImplSpec extends Specification {
 
 		then:
 		thrown(IllegalStateException)
+	}
+
+	def "check actions on statistics collection with applied filter"() {
+		setup:
+		def filter = Mock(IStatisticsFilter)
+		def collector = Mock(StatisticsCollector)
+
+		manager.collectors.put('name', collector)
+
+		when:
+		manager.collectStatistics('name', filter, false)
+
+		then:
+		1 * collector.collectStatistics(filter, false)
+	}
+
+	def "check actions on statistics collection with not-applied filter"() {
+		setup:
+		def filter = Mock(IStatisticsFilter)
+		def collector = Mock(StatisticsCollector)
+
+		manager.collectors.put('name', collector)
+
+		when:
+		manager.collectStatistics('another name', filter, false)
+
+		then:
+		0 * collector.collectStatistics(filter, false)
 	}
 }

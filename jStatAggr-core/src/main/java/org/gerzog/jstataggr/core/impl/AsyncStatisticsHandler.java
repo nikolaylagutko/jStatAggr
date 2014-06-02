@@ -52,8 +52,7 @@ public class AsyncStatisticsHandler extends AbstractStatisticsHandler {
 		this(DEFAULT_THREAD_NUMBER);
 	}
 
-	public AsyncStatisticsHandler(final IStatisticsManager manager,
-			final int threadNumber) {
+	public AsyncStatisticsHandler(final IStatisticsManager manager, final int threadNumber) {
 		super(manager);
 
 		this.threadNumber = threadNumber;
@@ -65,8 +64,7 @@ public class AsyncStatisticsHandler extends AbstractStatisticsHandler {
 
 	@Override
 	protected void handleStatistics(final Runnable action) {
-		notNull(updateExecutor,
-				"Executor was not initialized. Please call method initialize().");
+		notNull(updateExecutor, "Executor was not initialized. Please call method initialize().");
 
 		updateExecutor.submit(action);
 	}
@@ -77,9 +75,7 @@ public class AsyncStatisticsHandler extends AbstractStatisticsHandler {
 
 	@PostConstruct
 	public void initialize() {
-		isTrue(threadNumber > 0,
-				"ThreadNumber can be in rage %s..%s, but input value is %s", 1,
-				Integer.MAX_VALUE, threadNumber);
+		isTrue(threadNumber > 0, "ThreadNumber can be in rage %s..%s, but input value is %s", 1, Integer.MAX_VALUE, threadNumber);
 
 		updateExecutor = Executors.newFixedThreadPool(threadNumber);
 	}

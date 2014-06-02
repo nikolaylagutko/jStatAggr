@@ -22,9 +22,12 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.gerzog.jstataggr.IStatisticsFilter;
 import org.gerzog.jstataggr.IStatisticsManager;
 import org.gerzog.jstataggr.annotations.Aggregated;
 import org.gerzog.jstataggr.annotations.StatisticsKey;
@@ -94,4 +97,20 @@ public class StatisticsManagerImpl implements IStatisticsManager {
 		}, (e) -> new IllegalStateException("There is no public getter for field <" + field + ">", e));
 	}
 
+	@Override
+	public Map<String, Collection<Object>> collectStatistics(final String statisticsName, final IStatisticsFilter filter, final boolean cleanup) {
+		final Map<String, Collection<Object>> result = new HashMap<>();
+
+		collectors.forEach((name, collector) -> {
+			if ((statisticsName == null) || name.equals(statisticsName)) {
+				result.put(name, collector.collectStatistics(filter, cleanup));
+			}
+		});
+
+		return result;
+	}
+
+	protected Map<String, StatisticsCollector> getCollectors() {
+		return collectors;
+	}
 }

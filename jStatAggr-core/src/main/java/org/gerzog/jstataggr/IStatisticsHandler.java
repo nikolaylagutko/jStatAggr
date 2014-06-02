@@ -15,6 +15,8 @@
  */
 package org.gerzog.jstataggr;
 
+import java.util.Collection;
+
 /**
  * Main entry point to handle Statistics. Updates aggregated statistics data for
  * each annotated class.
@@ -27,5 +29,13 @@ public interface IStatisticsHandler {
 	 * Updates aggregated data based on entry class annotations
 	 */
 	void handleStatistics(Object statisticsEntry);
+
+	void writeStatistics(boolean cleanup);
+
+	void writeStatistics(String statisticsName, boolean cleanup);
+
+	void writeStatistics(String statisticsName, IStatisticsFilter filter, boolean cleanup);
+
+	void setStatisticsWriters(Collection<IStatisticsWriter> writers);
 
 }

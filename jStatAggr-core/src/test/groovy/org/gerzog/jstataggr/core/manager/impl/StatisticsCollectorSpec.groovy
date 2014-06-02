@@ -15,6 +15,7 @@
  */
 package org.gerzog.jstataggr.core.manager.impl
 
+import org.gerzog.jstataggr.IStatisticsFilter
 import org.gerzog.jstataggr.core.manager.impl.StatisticsKey.StatisticsKeyBuilder
 
 import spock.lang.Specification
@@ -62,5 +63,54 @@ class StatisticsCollectorSpec extends Specification {
 		1 * collector.generateStatisticsKey(statisticsData) >> key
 		1 * collector.generateStatisticsBucket(key, statisticsData) >> statisticsBucket
 		bucket != null
+	}
+
+	def "check statistics collection for all available keys"() {
+		setup:
+		IStatisticsFilter filter = Mock(IStatisticsFilter)
+		filter.isApplied(_ as StatisticsKey) >> true
+
+		collector.statistics.put(new StatisticsKeyBuilder().withParameter('key1', 'value1').build(), new Object())
+		collector.statistics.put(new StatisticsKeyBuilder().withParameter('key2', 'value2').build(), new Object())
+
+		when:
+		def result = collector.collectStatistics(filter, false)
+
+		then:
+		result.size() == 2
+		collector.statistics.size() == 2
+	}
+
+	def "check statistics collection for all available keys with cleanup"() {
+		setup:
+		IStatisticsFilter filter = Mock(IStatisticsFilter)
+		filter.isApplied(_ as StatisticsKey) >> true
+
+		collector.statistics.put(new StatisticsKeyBuilder().withParameter('key1', 'value1').build(), new Object())
+		collector.statistics.put(new StatisticsKeyBuilder().withParameter('key2', 'value2').build(), new Object())
+
+		when:
+		def result = collector.collectStatistics(filter, true)
+
+		then:
+		result.size() == 2
+		collector.statistics.size() == 0
+	}
+
+	def "check statistics collection for selected keys with cleanup"() {
+		setup:
+		StatisticsKey key = new StatisticsKeyBuilder().withParameter('key1', 'value1').build()
+		IStatisticsFilter filter = Mock(IStatisticsFilter)
+		filter.isApplied(key) >> true
+
+		collector.statistics.put(key, new Object())
+		collector.statistics.put(new StatisticsKeyBuilder().withParameter('key2', 'value2').build(), new Object())
+
+		when:
+		def result = collector.collectStatistics(filter, true)
+
+		then:
+		result.size() == 1
+		collector.statistics.size() == 1
 	}
 }

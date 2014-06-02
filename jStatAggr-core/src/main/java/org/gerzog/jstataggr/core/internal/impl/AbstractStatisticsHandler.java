@@ -18,9 +18,13 @@ package org.gerzog.jstataggr.core.internal.impl;
 import static org.apache.commons.lang3.Validate.isTrue;
 import static org.apache.commons.lang3.Validate.notNull;
 
+import java.util.Collection;
+
 import org.apache.commons.lang3.StringUtils;
+import org.gerzog.jstataggr.IStatisticsFilter;
 import org.gerzog.jstataggr.IStatisticsHandler;
 import org.gerzog.jstataggr.IStatisticsManager;
+import org.gerzog.jstataggr.IStatisticsWriter;
 import org.gerzog.jstataggr.annotations.StatisticsEntry;
 
 /**
@@ -35,6 +39,8 @@ public abstract class AbstractStatisticsHandler implements IStatisticsHandler {
 	private static final String INPUT_PARAMETER_NULL_MESSAGE = "StatisticsEntry cannot be null";
 
 	private IStatisticsManager manager;
+
+	private Collection<IStatisticsWriter> writers;
 
 	protected AbstractStatisticsHandler() {
 		this(null);
@@ -76,5 +82,32 @@ public abstract class AbstractStatisticsHandler implements IStatisticsHandler {
 	}
 
 	protected abstract void handleStatistics(Runnable action);
+
+	@Override
+	public void writeStatistics(final boolean cleanup) {
+		writeStatistics(null, (key) -> true, cleanup);
+
+	}
+
+	@Override
+	public void writeStatistics(final String statisticsName, final boolean cleanup) {
+		writeStatistics(statisticsName, (key) -> true, cleanup);
+	}
+
+	@Override
+	public void writeStatistics(final String statisticsName, final IStatisticsFilter filter, final boolean cleanup) {
+		notNull(manager, "Statistics Manager cannot be null");
+
+		if (writers != null) {
+			manager.collectStatistics(statisticsName, filter, cleanup).forEach((name, data) -> {
+				writers.forEach(writer -> writer.writeStatistics(name, data));
+			});
+		}
+	}
+
+	@Override
+	public void setStatisticsWriters(final Collection<IStatisticsWriter> writers) {
+		this.writers = writers;
+	}
 
 }

@@ -23,6 +23,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +39,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.gerzog.jstataggr.AggregationType;
+import org.gerzog.jstataggr.IStatisticsFilter;
 import org.gerzog.jstataggr.core.manager.impl.StatisticsKey.StatisticsKeyBuilder;
 import org.gerzog.jstataggr.core.templates.TemplateHelper;
 import org.gerzog.jstataggr.core.utils.FieldUtils;
@@ -278,5 +280,19 @@ public class StatisticsCollector {
 
 	protected Map<StatisticsKey, Object> getStatistics() {
 		return statistics;
+	}
+
+	public Collection<Object> collectStatistics(final IStatisticsFilter filter, final boolean cleanup) {
+		final Collection<Object> result = new ArrayList<>();
+
+		statistics.keySet().forEach(key -> {
+			if (filter.isApplied(key)) {
+				final Object data = cleanup ? statistics.remove(key) : statistics.get(key);
+
+				result.add(data);
+			}
+		});
+
+		return result;
 	}
 }

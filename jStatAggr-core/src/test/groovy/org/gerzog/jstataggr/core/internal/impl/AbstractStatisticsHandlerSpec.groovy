@@ -15,8 +15,10 @@
  */
 package org.gerzog.jstataggr.core.internal.impl
 
+import org.gerzog.jstataggr.IStatisticsFilter
 import org.gerzog.jstataggr.IStatisticsHandler
 import org.gerzog.jstataggr.IStatisticsManager
+import org.gerzog.jstataggr.IStatisticsWriter
 import org.gerzog.jstataggr.annotations.StatisticsEntry
 
 import spock.lang.Specification
@@ -48,6 +50,8 @@ class AbstractStatisticsHandlerSpec extends Specification {
 	IStatisticsManager manager = Mock(IStatisticsManager)
 
 	IStatisticsHandler handler = Spy(TestStatisticsHandler)
+
+	IStatisticsWriter writer = Mock(IStatisticsWriter)
 
 	def setup() {
 		handler.setManager(manager)
@@ -102,5 +106,61 @@ class AbstractStatisticsHandlerSpec extends Specification {
 
 		then:
 		thrown(NullPointerException)
+	}
+
+	def "check actions on writing all statistics"() {
+		when:
+		handler.writeStatistics(true)
+
+		then:
+		1 * handler.writeStatistics(null, _ as IStatisticsFilter, true) >> null
+	}
+
+	def "check actions on writing statistics by name"() {
+		when:
+		handler.writeStatistics('some name', false)
+
+		then:
+		1 * handler.writeStatistics('some name', _ as IStatisticsFilter, false) >> null
+	}
+
+	def "check writing statistics when manager is null"() {
+		setup:
+		handler.setManager(null)
+
+		when:
+		handler.writeStatistics('some name', false)
+
+		then:
+		thrown(NullPointerException)
+	}
+
+	def "check actions on writing statistics"() {
+		setup:
+		def filter = Mock(IStatisticsFilter)
+		def object1 = new Object()
+		def object2 = new Object()
+		def object3 = new Object()
+
+		def export = prepareExport(object1, object2, object3)
+		manager.collectStatistics('name', filter, false) >> export
+		handler.statisticsWriters = [writer]
+
+		when:
+		handler.writeStatistics('name', filter, false)
+
+		then:
+		1 * writer.writeStatistics('name', export.get('name'))
+	}
+
+	def prepareExport(def ... objects) {
+		def result = [:]
+
+		def list = new ArrayList<Object>()
+		objects.each { list.add(it) }
+
+		result.put('name', list)
+
+		result
 	}
 }

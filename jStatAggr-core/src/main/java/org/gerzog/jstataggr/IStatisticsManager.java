@@ -15,13 +15,17 @@
  */
 package org.gerzog.jstataggr;
 
+import java.util.Collection;
+import java.util.Map;
+
 /**
  * @author Nikolay Lagutko (nikolay.lagutko@mail.com)
  *
  */
 public interface IStatisticsManager {
 
-	void updateStatistics(Object statisticsEntry, Class<?> statisticsClass,
-			String statisticsName);
+	void updateStatistics(Object statisticsEntry, Class<?> statisticsClass, String statisticsName);
+
+	Map<String, Collection<Object>> collectStatistics(String statisticsName, IStatisticsFilter filter, boolean cleanup);
 
 }

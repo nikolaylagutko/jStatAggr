@@ -28,8 +28,7 @@ public class StatisticsKey {
 
 		private final StatisticsKey result = new StatisticsKey();
 
-		public StatisticsKeyBuilder withParameter(final String keyName,
-				final Object keyValue) {
+		public StatisticsKeyBuilder withParameter(final String keyName, final Object keyValue) {
 			result.keyParts.put(keyName, keyValue);
 
 			return this;
@@ -71,6 +70,11 @@ public class StatisticsKey {
 		}
 
 		return false;
+	}
+
+	@Override
+	public String toString() {
+		return keyParts.toString();
 	}
 
 }
