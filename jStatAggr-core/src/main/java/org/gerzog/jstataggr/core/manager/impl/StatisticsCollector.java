@@ -41,6 +41,7 @@ import org.gerzog.jstataggr.AggregationType;
 import org.gerzog.jstataggr.core.manager.impl.StatisticsKey.StatisticsKeyBuilder;
 import org.gerzog.jstataggr.core.templates.TemplateHelper;
 import org.gerzog.jstataggr.core.utils.FieldUtils;
+import org.gerzog.jstataggr.core.utils.InitializerUtils;
 
 /**
  * @author Nikolay Lagutko (nikolay.lagutko@mail.com)
@@ -125,8 +126,8 @@ public class StatisticsCollector {
 
 		final CtClass clazz = pool.makeClass(PACKAGE_PREFIX + StringUtils.capitalize(className));
 
-		addProperties(clazz, statisticsKeys.keySet(), pool);
-		addProperties(clazz, aggregations.keySet(), pool);
+		addProperties(clazz, statisticsKeys.keySet(), pool, null);
+		addProperties(clazz, aggregations.keySet(), pool, aggregationTypes);
 		addUpdaters(clazz, aggregations.keySet(), aggregationTypes, pool);
 
 		return propogate(() -> generateClassInfo(clazz.toClass(), statisticsKeys, aggregations, aggregationTypes));
@@ -160,8 +161,14 @@ public class StatisticsCollector {
 		return result;
 	}
 
-	protected static void addProperties(final CtClass clazz, final Set<Field> fields, final ClassPool pool) {
-		fields.forEach(field -> addProperty(clazz, field, pool));
+	protected static void addProperties(final CtClass clazz, final Set<Field> fields, final ClassPool pool, final Map<Field, List<AggregationType>> aggregationTypes) {
+		fields.forEach(field -> {
+			if (aggregationTypes == null) {
+				addProperty(clazz, field, pool, null);
+			} else {
+				aggregationTypes.get(field).forEach(aggregationType -> addProperty(clazz, field, pool, aggregationType));
+			}
+		});
 	}
 
 	protected static void addUpdaters(final CtClass clazz, final Set<Field> fields, final Map<Field, List<AggregationType>> aggregations, final ClassPool pool) {
@@ -188,15 +195,21 @@ public class StatisticsCollector {
 		});
 	}
 
-	protected static void addProperty(final CtClass clazz, final Field field, final ClassPool pool) {
+	protected static void addProperty(final CtClass clazz, final Field field, final ClassPool pool, final AggregationType aggregationType) {
 		propogate(() -> {
+			final String fieldName = aggregationType == null ? field.getName() : FieldUtils.getAggregationFieldName(field.getName(), aggregationType);
+
 			final CtClass type = pool.getCtClass(field.getType().getName());
 
-			final CtField ctField = new CtField(type, field.getName(), clazz);
-			clazz.addField(ctField);
+			final CtField ctField = new CtField(type, fieldName, clazz);
+			if (aggregationType != null) {
+				clazz.addField(ctField, InitializerUtils.getInitializer(field.getType(), aggregationType));
+			} else {
+				clazz.addField(ctField);
+			}
 
-			final CtMethod getter = CtMethod.make(TemplateHelper.getter(field.getName(), field.getType()), clazz);
-			final CtMethod setter = CtMethod.make(TemplateHelper.setter(field.getName(), field.getType()), clazz);
+			final CtMethod getter = CtMethod.make(TemplateHelper.getter(fieldName, field.getType()), clazz);
+			final CtMethod setter = CtMethod.make(TemplateHelper.setter(fieldName, field.getType()), clazz);
 
 			clazz.addMethod(getter);
 			clazz.addMethod(setter);

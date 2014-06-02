@@ -67,19 +67,18 @@ class TemplateHelperSpec extends Specification {
 	}
 
 	@Unroll
-	def "check simple updater body"(AggregationType aggregation) {
+	def "check simple updater body"(AggregationType aggregation, String postfix) {
 		when:
 		def result = TemplateHelper.simpleUpdaterBody('value', aggregation)
 
 		then:
-		result == "org.gerzog.jstataggr.core.functions.FunctionHelper.apply(org.gerzog.jstataggr.AggregationType.${aggregation.name()}, this.value, value);"
+		result == "org.gerzog.jstataggr.core.functions.FunctionHelper.apply(org.gerzog.jstataggr.AggregationType.${aggregation.name()}, this.value${postfix}, value);"
 
 		where:
-		aggregation << [
-			AggregationType.MIN,
-			AggregationType.MAX,
-			AggregationType.SUM
-		]
+		aggregation 		| postfix
+		AggregationType.MIN | 'Min'
+		AggregationType.MAX | 'Max'
+		AggregationType.SUM	| 'Sum'
 	}
 
 	@Unroll

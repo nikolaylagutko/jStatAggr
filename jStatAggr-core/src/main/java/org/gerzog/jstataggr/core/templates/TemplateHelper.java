@@ -103,7 +103,7 @@ public final class TemplateHelper {
 
 		final StringBuilder builder = new StringBuilder();
 
-		builder.append(APPLY_METHOD_PREFIX).append(AGGREGATION_TYPE_PREFIX).append(aggregationType.name()).append(", this.").append(name).append(", ").append(name).append(");");
+		builder.append(APPLY_METHOD_PREFIX).append(AGGREGATION_TYPE_PREFIX).append(aggregationType.name()).append(", this.").append(FieldUtils.getAggregationFieldName(name, aggregationType)).append(", ").append(name).append(");");
 
 		return builder.toString();
 	}

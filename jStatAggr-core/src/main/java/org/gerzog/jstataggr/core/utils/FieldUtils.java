@@ -40,7 +40,11 @@ public final class FieldUtils {
 	}
 
 	public static String getUpdaterName(final String name, final AggregationType aggregationType) {
-		return UPDATER_PREFIX + StringUtils.capitalize(name) + getAggregationPostfix(aggregationType);
+		return UPDATER_PREFIX + StringUtils.capitalize(getAggregationFieldName(name, aggregationType));
+	}
+
+	public static String getAggregationFieldName(final String name, final AggregationType aggregationType) {
+		return name + getAggregationPostfix(aggregationType);
 	}
 
 	private static String getAggregationPostfix(final AggregationType aggregationType) {
