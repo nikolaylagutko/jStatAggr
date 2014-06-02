@@ -27,7 +27,8 @@ import org.gerzog.jstataggr.annotations.StatisticsKey;
 @StatisticsEntry("sample_statistics_one")
 public class StatisticsOne {
 
-	@Aggregated({ AggregationType.MIN, AggregationType.MAX, AggregationType.SUM })
+	@Aggregated({ AggregationType.MIN, AggregationType.MAX,
+			AggregationType.SUM, AggregationType.AVERAGE })
 	private int value;
 
 	@StatisticsKey

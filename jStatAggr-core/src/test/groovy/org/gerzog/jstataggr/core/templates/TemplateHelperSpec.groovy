@@ -36,7 +36,7 @@ class TemplateHelperSpec extends Specification {
 
 	def "check method creation"() {
 		when:
-		def result = TemplateHelper.method('value', Integer.class, '', String, 'param1', Specification, 'param2')
+		def result = TemplateHelper.method('value', 'java.lang.Integer', '', 'java.lang.String', 'param1', 'spock.lang.Specification', 'param2')
 
 		then:
 		result == 'public java.lang.Integer value(java.lang.String param1, spock.lang.Specification param2) {}'
@@ -126,5 +126,13 @@ class TemplateHelperSpec extends Specification {
 		int[].class 	| 'int[]'
 		String[].class	| 'java.lang.String[]'
 		null			| null
+	}
+
+	def "check body for average getter"() {
+		when:
+		def result = TemplateHelper.averageGetterBody('value')
+
+		then:
+		result == 'return this.valueSum / this.valueCount;'
 	}
 }

@@ -54,6 +54,7 @@ abstract class AbstractSampleSpec extends Specification {
 				assert it.valueMax == 9
 				assert it.valueMin == 0
 				assert it.valueSum == [0..9].sum().sum()
+				assert it.getValueAverage() == 4
 			}
 		}
 	}

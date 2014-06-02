@@ -34,29 +34,22 @@ class FunctionHelperSpec extends Specification {
 		thrown(IllegalStateException)
 	}
 
-	def "check COUNT function for int apply()"() {
-		when:
-		FunctionHelper.apply(AggregationType.COUNT, 0, 0)
-
-		then:
-		thrown(IllegalStateException)
-	}
-
 	@Unroll
 	def "check apply for int"(AggregationType type, int current, int update, int result) {
 		when:
-		def output = FunctionHelper.apply(type, current, update)
+		def output = FunctionHelper.apply(type, update, current)
 
 		then:
 		output == result
 
 		where:
-		type 				| current | update | result
-		AggregationType.MAX	| 10	  | 20	   | 20
-		AggregationType.MAX	| 20	  | 10	   | 20
-		AggregationType.MIN	| 10	  | 20	   | 10
-		AggregationType.MIN	| 20	  | 10	   | 10
-		AggregationType.SUM	| 10	  | 20	   | 30
+		type 					| current | update | result
+		AggregationType.MAX		| 10	  | 20	   | 20
+		AggregationType.MAX		| 20	  | 10	   | 20
+		AggregationType.MIN		| 10	  | 20	   | 10
+		AggregationType.MIN		| 20	  | 10	   | 10
+		AggregationType.SUM		| 10	  | 20	   | 30
+		AggregationType.COUNT 	| 10	  | 20	   | 11
 	}
 
 	def "check AVERAGE function for long apply()"() {
@@ -67,29 +60,22 @@ class FunctionHelperSpec extends Specification {
 		thrown(IllegalStateException)
 	}
 
-	def "check COUNT function for long apply()"() {
-		when:
-		FunctionHelper.apply(AggregationType.COUNT, 0l, 0l)
-
-		then:
-		thrown(IllegalStateException)
-	}
-
 	@Unroll
 	def "check apply for long"(AggregationType type, long current, long update, long result) {
 		when:
-		def output = FunctionHelper.apply(type, current, update)
+		def output = FunctionHelper.apply(type, update, current)
 
 		then:
 		output == result
 
 		where:
-		type 				| current | update | result
-		AggregationType.MAX	| 10	  | 20	   | 20
-		AggregationType.MAX	| 20	  | 10	   | 20
-		AggregationType.MIN	| 10	  | 20	   | 10
-		AggregationType.MIN	| 20	  | 10	   | 10
-		AggregationType.SUM	| 10	  | 20	   | 30
+		type 					| current | update | result
+		AggregationType.MAX		| 10	  | 20	   | 20
+		AggregationType.MAX		| 20	  | 10	   | 20
+		AggregationType.MIN		| 10	  | 20	   | 10
+		AggregationType.MIN		| 20	  | 10	   | 10
+		AggregationType.SUM		| 10	  | 20	   | 30
+		AggregationType.COUNT 	| 10	  | 20	   | 11
 	}
 
 	@Unroll

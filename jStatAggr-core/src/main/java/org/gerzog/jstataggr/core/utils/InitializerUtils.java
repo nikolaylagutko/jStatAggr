@@ -41,6 +41,7 @@ public final class InitializerUtils {
 			return getMinValueInitializer(type);
 		case SUM:
 		case COUNT:
+		case AVERAGE:
 			return getZeroInitializer(type);
 		default:
 			throw new IllegalArgumentException("Initializer for <" + aggregation + "> is not yet defined");

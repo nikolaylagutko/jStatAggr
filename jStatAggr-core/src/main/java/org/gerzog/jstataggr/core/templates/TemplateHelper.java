@@ -42,10 +42,22 @@ public final class TemplateHelper {
 		return method(FieldUtils.getGetterName(name, type), getTypeName(type), getterBody(name));
 	}
 
+	public static String averageGetter(final String name, final Class<?> type) {
+		return method(name, getTypeName(type), averageGetterBody(name));
+	}
+
 	protected static String getterBody(final String name) {
 		final StringBuilder builder = new StringBuilder();
 
 		builder.append("return this.").append(name).append(";");
+
+		return builder.toString();
+	}
+
+	protected static String averageGetterBody(final String name) {
+		final StringBuilder builder = new StringBuilder();
+
+		builder.append("return this.").append(FieldUtils.getAggregationFieldName(name, AggregationType.SUM)).append(" / this.").append(FieldUtils.getAggregationFieldName(name, AggregationType.COUNT)).append(";");
 
 		return builder.toString();
 	}

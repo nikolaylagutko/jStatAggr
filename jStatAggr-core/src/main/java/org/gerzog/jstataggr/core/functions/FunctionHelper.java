@@ -36,7 +36,7 @@ public final class FunctionHelper {
 		case AVERAGE:
 			throw new IllegalStateException("Method apply() didn's support AVERAGE type. Please use applyAverage instread");
 		case COUNT:
-			throw new IllegalStateException("Method apply() for int didn's support COUNT type.");
+			return current + 1;
 		case MAX:
 			return Math.max(update, current);
 		case MIN:
@@ -53,7 +53,7 @@ public final class FunctionHelper {
 		case AVERAGE:
 			throw new IllegalStateException("Method apply() didn's support AVERAGE type. Please use applyAverage instread");
 		case COUNT:
-			throw new IllegalStateException("Method apply() for long didn's support COUNT type.");
+			return current + 1;
 		case MAX:
 			return Math.max(update, current);
 		case MIN:

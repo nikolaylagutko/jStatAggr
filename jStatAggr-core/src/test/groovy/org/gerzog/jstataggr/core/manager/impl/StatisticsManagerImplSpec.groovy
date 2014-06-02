@@ -39,8 +39,14 @@ class StatisticsManagerImplSpec extends Specification {
 		@StatisticsKey
 		String name
 
-		@Aggregated([AggregationType.MIN, AggregationType.SUM, AggregationType.COUNT])
+		@Aggregated([AggregationType.MIN, AggregationType.SUM, AggregationType.COUNT, AggregationType.AVERAGE])
 		int value
+
+		@Aggregated([AggregationType.COUNT, AggregationType.AVERAGE])
+		int value2
+
+		@Aggregated([AggregationType.SUM, AggregationType.AVERAGE])
+		int value3
 
 		String escaped
 	}
@@ -109,7 +115,8 @@ class StatisticsManagerImplSpec extends Specification {
 		1 * builder.addAggregation(valueField, [
 			AggregationType.MIN,
 			AggregationType.SUM,
-			AggregationType.COUNT
+			AggregationType.COUNT,
+			AggregationType.AVERAGE
 		], _ as MethodHandle)
 	}
 
