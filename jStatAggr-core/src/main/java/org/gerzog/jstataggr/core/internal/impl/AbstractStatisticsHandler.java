@@ -21,7 +21,7 @@ import static org.apache.commons.lang3.Validate.notNull;
 import org.apache.commons.lang3.StringUtils;
 import org.gerzog.jstataggr.IStatisticsHandler;
 import org.gerzog.jstataggr.IStatisticsManager;
-import org.gerzog.jstataggr.core.StatisticsEntry;
+import org.gerzog.jstataggr.annotations.StatisticsEntry;
 
 /**
  * Abstract implementation of Statistcs Handler

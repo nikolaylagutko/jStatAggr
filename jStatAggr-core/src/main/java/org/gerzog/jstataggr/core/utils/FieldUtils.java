@@ -23,10 +23,6 @@ public final class FieldUtils {
 
 	}
 
-	public static String getGetterName(final Field field) {
-		return getGetterName(field.getName(), field.getType());
-	}
-
 	public static String getGetterName(final String name, final Class<?> type) {
 		final String prefix = type.equals(Boolean.class) || type.equals(boolean.class) ? BOOLEAN_GETTER_PREFIX : DEFAULT_GETTER_PREFIX;
 

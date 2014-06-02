@@ -26,8 +26,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.gerzog.jstataggr.IStatisticsManager;
-import org.gerzog.jstataggr.core.Aggregated;
-import org.gerzog.jstataggr.core.StatisticsKey;
+import org.gerzog.jstataggr.annotations.Aggregated;
+import org.gerzog.jstataggr.annotations.StatisticsKey;
 import org.gerzog.jstataggr.core.manager.impl.StatisticsCollector.StatisticsCollectorBuilder;
 
 /**

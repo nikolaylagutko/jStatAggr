@@ -17,7 +17,7 @@ package org.gerzog.jstataggr.core.internal.impl
 
 import org.gerzog.jstataggr.IStatisticsHandler
 import org.gerzog.jstataggr.IStatisticsManager
-import org.gerzog.jstataggr.core.StatisticsEntry
+import org.gerzog.jstataggr.annotations.StatisticsEntry
 
 import spock.lang.Specification
 

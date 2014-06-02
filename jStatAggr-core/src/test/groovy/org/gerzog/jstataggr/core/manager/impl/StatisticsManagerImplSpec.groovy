@@ -19,9 +19,9 @@ import java.lang.invoke.MethodHandle
 
 import org.gerzog.jstataggr.AggregationType
 import org.gerzog.jstataggr.IStatisticsManager
-import org.gerzog.jstataggr.core.Aggregated
-import org.gerzog.jstataggr.core.StatisticsEntry
-import org.gerzog.jstataggr.core.StatisticsKey
+import org.gerzog.jstataggr.annotations.Aggregated
+import org.gerzog.jstataggr.annotations.StatisticsEntry
+import org.gerzog.jstataggr.annotations.StatisticsKey
 import org.gerzog.jstataggr.core.manager.impl.StatisticsCollector.StatisticsCollectorBuilder
 
 import spock.lang.Specification

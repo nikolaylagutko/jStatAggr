@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gerzog.jstataggr.core;
+package org.gerzog.jstataggr.annotations;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;

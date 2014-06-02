@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gerzog.jstataggr.core;
+package org.gerzog.jstataggr.annotations;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -22,17 +22,19 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Marks a field to be a part of Statistics Key.
- *
- * This mean that values of non-key field will be unique along the portion of
- * statistics data
+ * Class marked with this annotation will be handled as a single portion of
+ * Statistics Data
  *
  * @author Nikolay Lagutko (nikolay.lagutko@mail.com)
- *
  */
-@Target(ElementType.FIELD)
+@Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-public @interface StatisticsKey {
+public @interface StatisticsEntry {
+
+	/**
+	 * Name of Statistics (default is name of class)
+	 */
+	public String value() default "";
 
 }

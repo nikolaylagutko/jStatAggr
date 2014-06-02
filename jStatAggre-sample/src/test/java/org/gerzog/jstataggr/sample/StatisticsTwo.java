@@ -1,9 +1,9 @@
 package org.gerzog.jstataggr.sample;
 
 import org.gerzog.jstataggr.AggregationType;
-import org.gerzog.jstataggr.core.Aggregated;
-import org.gerzog.jstataggr.core.StatisticsEntry;
-import org.gerzog.jstataggr.core.StatisticsKey;
+import org.gerzog.jstataggr.annotations.Aggregated;
+import org.gerzog.jstataggr.annotations.StatisticsEntry;
+import org.gerzog.jstataggr.annotations.StatisticsKey;
 
 /**
  * @author Nikolay Lagutko (nikolay.lagutko@mail.com)
