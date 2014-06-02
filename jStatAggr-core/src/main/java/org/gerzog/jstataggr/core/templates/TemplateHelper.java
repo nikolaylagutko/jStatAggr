@@ -16,9 +16,9 @@
 package org.gerzog.jstataggr.core.templates;
 
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.gerzog.jstataggr.core.AggregationType;
+import org.gerzog.jstataggr.AggregationType;
 import org.gerzog.jstataggr.core.functions.FunctionHelper;
+import org.gerzog.jstataggr.core.utils.FieldUtils;
 
 /**
  * @author Nikolay Lagutko (nikolay.lagutko@mail.com)
@@ -39,9 +39,7 @@ public final class TemplateHelper {
 	}
 
 	public static String getter(final String name, final Class<?> type) {
-		final String prefix = type.equals(Boolean.class) ? "is" : "get";
-
-		return method(prefix, name, null, type, getterBody(name));
+		return method(FieldUtils.getGetterName(name, type), type, getterBody(name));
 	}
 
 	protected static String getterBody(final String name) {
@@ -52,7 +50,7 @@ public final class TemplateHelper {
 		return builder.toString();
 	}
 
-	protected static String method(final String prefix, final String name, final String postfix, final Class<?> result, final String body, final Object... arguments) {
+	protected static String method(final String name, final Class<?> result, final String body, final Object... arguments) {
 		final StringBuilder builder = new StringBuilder();
 
 		builder.append("public ");
@@ -63,11 +61,7 @@ public final class TemplateHelper {
 			builder.append("void");
 		}
 
-		builder.append(" ").append(prefix).append(StringUtils.capitalize(name));
-
-		if (postfix != null) {
-			builder.append(StringUtils.capitalize(StringUtils.lowerCase(postfix)));
-		}
+		builder.append(" ").append(name);
 
 		builder.append("(");
 
@@ -87,7 +81,7 @@ public final class TemplateHelper {
 	}
 
 	public static String setter(final String name, final Class<?> type) {
-		return method("set", name, null, null, setterBody(name), type, name);
+		return method(FieldUtils.getSetterName(name), null, setterBody(name), type, name);
 	}
 
 	protected static String setterBody(final String name) {
@@ -99,7 +93,7 @@ public final class TemplateHelper {
 	}
 
 	public static String simpleUpdater(final String name, final Class<?> type, final AggregationType aggregationType) {
-		return method("update", name, aggregationType.name(), null, simpleUpdaterBody(name, aggregationType), type, name);
+		return method(FieldUtils.getUpdaterName(name, aggregationType), null, simpleUpdaterBody(name, aggregationType), type, name);
 	}
 
 	protected static String simpleUpdaterBody(final String name, final AggregationType aggregationType) {

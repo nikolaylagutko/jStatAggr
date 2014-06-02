@@ -15,10 +15,9 @@
  */
 package org.gerzog.jstataggr.core.internal.impl
 
-import org.gerzog.jstataggr.core.IStatisticsHandler
-import org.gerzog.jstataggr.core.IStatisticsManager;
-import org.gerzog.jstataggr.core.annotations.StatisticsEntry
-import org.gerzog.jstataggr.core.internal.impl.AbstractStatisticsHandler
+import org.gerzog.jstataggr.IStatisticsHandler
+import org.gerzog.jstataggr.IStatisticsManager
+import org.gerzog.jstataggr.core.StatisticsEntry
 
 import spock.lang.Specification
 

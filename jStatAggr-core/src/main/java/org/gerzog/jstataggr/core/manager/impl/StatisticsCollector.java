@@ -18,7 +18,10 @@ package org.gerzog.jstataggr.core.manager.impl;
 import static org.gerzog.jstataggr.core.utils.Throwables.propogate;
 
 import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -32,10 +35,12 @@ import javassist.CtField;
 import javassist.CtMethod;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
-import org.gerzog.jstataggr.core.AggregationType;
+import org.gerzog.jstataggr.AggregationType;
 import org.gerzog.jstataggr.core.manager.impl.StatisticsKey.StatisticsKeyBuilder;
 import org.gerzog.jstataggr.core.templates.TemplateHelper;
+import org.gerzog.jstataggr.core.utils.FieldUtils;
 
 /**
  * @author Nikolay Lagutko (nikolay.lagutko@mail.com)
@@ -61,16 +66,13 @@ public class StatisticsCollector {
 			this.className = className;
 		}
 
-		public StatisticsCollectorBuilder addStatisticsKey(final Field field,
-				final MethodHandle getter) {
+		public StatisticsCollectorBuilder addStatisticsKey(final Field field, final MethodHandle getter) {
 			statisticsKeys.put(field, getter);
 
 			return this;
 		}
 
-		public StatisticsCollectorBuilder addAggregation(final Field field,
-				final AggregationType[] aggregationTypes,
-				final MethodHandle getter) {
+		public StatisticsCollectorBuilder addAggregation(final Field field, final AggregationType[] aggregationTypes, final MethodHandle getter) {
 			aggregations.put(field, getter);
 			this.aggregationTypes.put(field, Arrays.asList(aggregationTypes));
 
@@ -78,104 +80,123 @@ public class StatisticsCollector {
 		}
 
 		public StatisticsCollector build() {
-			result.classInfo = generateClassInfo(className, statisticsKeys,
-					aggregations, aggregationTypes);
+			result.classInfo = generateClassInfo(className, statisticsKeys, aggregations, aggregationTypes);
 
 			return result;
 		}
 
 	}
 
-	private class CollectorClassInfo {
-		private Class<?> collectorClass;
+	private static class CollectorClassInfo {
+		private final Class<?> bucketClass;
 
-		private Map<String, Pair<MethodHandle, MethodHandle>> statisticsKeyHandles;
+		private final Map<String, Pair<MethodHandle, MethodHandle>> statisticsKeyHandles = new HashMap<>();
 
-		private List<Pair<MethodHandle, MethodHandle>> statisticsUpdaters;
+		private final List<Pair<MethodHandle, MethodHandle>> statisticsUpdaters = new ArrayList<>();
+
+		public CollectorClassInfo(final Class<?> bucketClass) {
+			this.bucketClass = bucketClass;
+		}
+
+		public Map<String, Pair<MethodHandle, MethodHandle>> getStatisticsKeyHandles() {
+			return statisticsKeyHandles;
+		}
+
+		public List<Pair<MethodHandle, MethodHandle>> getStatisticsUpdaters() {
+			return statisticsUpdaters;
+		}
+
+		public Class<?> getBucketClass() {
+			return bucketClass;
+		}
 	}
 
 	private CollectorClassInfo classInfo;
 
 	private final Map<StatisticsKey, Object> statistics = new ConcurrentHashMap<>();
 
-	private StatisticsCollector() {
+	// LN: 2.06.2014, made package-visible for tests
+	StatisticsCollector() {
 
 	}
 
-	protected static CollectorClassInfo generateClassInfo(
-			final String className,
-			final Map<Field, MethodHandle> statisticsKeys,
-			final Map<Field, MethodHandle> aggregations,
-			final Map<Field, List<AggregationType>> aggregationTypes) {
+	protected static CollectorClassInfo generateClassInfo(final String className, final Map<Field, MethodHandle> statisticsKeys, final Map<Field, MethodHandle> aggregations, final Map<Field, List<AggregationType>> aggregationTypes) {
 		final ClassPool pool = ClassPool.getDefault();
 
-		final CtClass clazz = pool.makeClass(PACKAGE_PREFIX
-				+ StringUtils.capitalize(className));
+		final CtClass clazz = pool.makeClass(PACKAGE_PREFIX + StringUtils.capitalize(className));
 
 		addProperties(clazz, statisticsKeys.keySet(), pool);
 		addProperties(clazz, aggregations.keySet(), pool);
 		addUpdaters(clazz, aggregations.keySet(), aggregationTypes, pool);
 
-		return null;
+		return propogate(() -> generateClassInfo(clazz.toClass(), statisticsKeys, aggregations, aggregationTypes));
 	}
 
-	protected static void addProperties(final CtClass clazz,
-			final Set<Field> fields, final ClassPool pool) {
+	protected static CollectorClassInfo generateClassInfo(final Class<?> clazz, final Map<Field, MethodHandle> statisticsKeys, final Map<Field, MethodHandle> aggregations, final Map<Field, List<AggregationType>> aggregationTypes) {
+		final CollectorClassInfo result = new CollectorClassInfo(clazz);
+
+		statisticsKeys.forEach((field, handle) -> {
+			propogate(() -> {
+				final String fieldName = field.getName();
+
+				final Method setter = clazz.getMethod(FieldUtils.getSetterName(field), field.getType());
+				final MethodHandle setterHandle = MethodHandles.lookup().unreflect(setter);
+
+				result.getStatisticsKeyHandles().put(fieldName, ImmutablePair.of(handle, setterHandle));
+			});
+		});
+
+		aggregations.forEach((field, handle) -> {
+			aggregationTypes.get(field).forEach(aggregationType -> {
+				propogate(() -> {
+					final Method updater = clazz.getMethod(FieldUtils.getUpdaterName(field.getName(), aggregationType), field.getType());
+					final MethodHandle updaterHandle = MethodHandles.lookup().unreflect(updater);
+
+					result.getStatisticsUpdaters().add(ImmutablePair.of(handle, updaterHandle));
+				});
+			});
+		});
+
+		return result;
+	}
+
+	protected static void addProperties(final CtClass clazz, final Set<Field> fields, final ClassPool pool) {
 		fields.forEach(field -> addProperty(clazz, field, pool));
 	}
 
-	protected static void addUpdaters(final CtClass clazz,
-			final Set<Field> fields,
-			final Map<Field, List<AggregationType>> aggregations,
-			final ClassPool pool) {
+	protected static void addUpdaters(final CtClass clazz, final Set<Field> fields, final Map<Field, List<AggregationType>> aggregations, final ClassPool pool) {
 		fields.forEach(field -> {
-			aggregations
-					.get(field)
-					.forEach(
-					aggregation -> {
-						switch (aggregation) {
-						case MIN:
-						case MAX:
-						case SUM:
-							addSimpleUpdater(clazz, field, aggregation,
-									pool);
-							break;
-						default:
-							throw new UnsupportedOperationException(
-									"Updater for <"
-											+ aggregation
-											+ "> aggregation type is not implemented yet");
-						}
-					});
+			aggregations.get(field).forEach(aggregation -> {
+				switch (aggregation) {
+				case MIN:
+				case MAX:
+				case SUM:
+					addSimpleUpdater(clazz, field, aggregation, pool);
+					break;
+				default:
+					throw new UnsupportedOperationException("Updater for <" + aggregation + "> aggregation type is not implemented yet");
+				}
+			});
 		});
 	}
 
-	protected static void addSimpleUpdater(final CtClass clazz,
-			final Field field, final AggregationType aggregation,
-			final ClassPool pool) {
+	protected static void addSimpleUpdater(final CtClass clazz, final Field field, final AggregationType aggregation, final ClassPool pool) {
 		propogate(() -> {
-			final CtMethod updater = CtMethod.make(
-					TemplateHelper.simpleUpdater(field.getName(),
-							field.getType(), aggregation), clazz);
+			final CtMethod updater = CtMethod.make(TemplateHelper.simpleUpdater(field.getName(), field.getType(), aggregation), clazz);
 
 			clazz.addMethod(updater);
 		});
 	}
 
-	protected static void addProperty(final CtClass clazz, final Field field,
-			final ClassPool pool) {
+	protected static void addProperty(final CtClass clazz, final Field field, final ClassPool pool) {
 		propogate(() -> {
 			final CtClass type = pool.getCtClass(field.getType().getName());
 
 			final CtField ctField = new CtField(type, field.getName(), clazz);
 			clazz.addField(ctField);
 
-			final CtMethod getter = CtMethod.make(
-					TemplateHelper.getter(field.getName(), field.getType()),
-					clazz);
-			final CtMethod setter = CtMethod.make(
-					TemplateHelper.setter(field.getName(), field.getType()),
-					clazz);
+			final CtMethod getter = CtMethod.make(TemplateHelper.getter(field.getName(), field.getType()), clazz);
+			final CtMethod setter = CtMethod.make(TemplateHelper.setter(field.getName(), field.getType()), clazz);
 
 			clazz.addMethod(getter);
 			clazz.addMethod(setter);
@@ -183,33 +204,37 @@ public class StatisticsCollector {
 	}
 
 	public void updateStatistics(final Object statisticsData) {
-		final Object statisticsPiece = getStatisticsPiece(statisticsData);
+		final Object statisticsBucket = getStatisticsBucket(statisticsData);
 
-		classInfo.statisticsUpdaters.forEach(handles -> {
+		updateStatistics(statisticsBucket, statisticsData);
+	}
+
+	protected void updateStatistics(final Object statisticsBucket, final Object statisticsData) {
+		classInfo.getStatisticsUpdaters().forEach(handles -> {
 			propogate(() -> {
 				final Object value = handles.getLeft().invoke(statisticsData);
 
-				handles.getRight().invoke(statisticsPiece, value);
+				handles.getRight().invoke(statisticsBucket, value);
 			});
 		});
 	}
 
-	private Object getStatisticsPiece(final Object statisticsData) {
+	protected Object getStatisticsBucket(final Object statisticsData) {
 		final StatisticsKey key = generateStatisticsKey(statisticsData);
 
-		Object statisticsPiece = statistics.get(key);
+		Object statisticsBucket = statistics.get(key);
 
-		if (statisticsPiece == null) {
-			statisticsPiece = generateStatisticsCollector(key, statisticsData);
+		if (statisticsBucket == null) {
+			statisticsBucket = generateStatisticsBucket(key, statisticsData);
 		}
 
-		return statisticsPiece;
+		return statisticsBucket;
 	}
 
 	protected StatisticsKey generateStatisticsKey(final Object statisticsData) {
 		final StatisticsKeyBuilder builder = new StatisticsKeyBuilder();
 
-		classInfo.statisticsKeyHandles.forEach((name, handles) -> {
+		classInfo.getStatisticsKeyHandles().forEach((name, handles) -> {
 			propogate(() -> {
 				final Object value = handles.getLeft().invoke(statisticsData);
 
@@ -220,12 +245,11 @@ public class StatisticsCollector {
 		return builder.build();
 	}
 
-	protected Object generateStatisticsCollector(final StatisticsKey key,
-			final Object statisticsData) {
+	protected Object generateStatisticsBucket(final StatisticsKey key, final Object statisticsData) {
 		return propogate(() -> {
-			final Object result = classInfo.collectorClass.newInstance();
+			final Object result = classInfo.getBucketClass().newInstance();
 
-			classInfo.statisticsKeyHandles.forEach((name, handles) -> {
+			classInfo.getStatisticsKeyHandles().forEach((name, handles) -> {
 				propogate(() -> {
 					final Object value = key.get(name);
 
@@ -237,5 +261,9 @@ public class StatisticsCollector {
 
 			return existing == null ? result : existing;
 		});
+	}
+
+	protected Map<StatisticsKey, Object> getStatistics() {
+		return statistics;
 	}
 }

@@ -19,9 +19,9 @@ import static org.apache.commons.lang3.Validate.isTrue;
 import static org.apache.commons.lang3.Validate.notNull;
 
 import org.apache.commons.lang3.StringUtils;
-import org.gerzog.jstataggr.core.IStatisticsHandler;
-import org.gerzog.jstataggr.core.IStatisticsManager;
-import org.gerzog.jstataggr.core.annotations.StatisticsEntry;
+import org.gerzog.jstataggr.IStatisticsHandler;
+import org.gerzog.jstataggr.IStatisticsManager;
+import org.gerzog.jstataggr.core.StatisticsEntry;
 
 /**
  * Abstract implementation of Statistcs Handler

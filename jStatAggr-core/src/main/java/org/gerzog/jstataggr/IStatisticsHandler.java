@@ -13,31 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gerzog.jstataggr.core.annotations;
-
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-
-import org.gerzog.jstataggr.core.AggregationType;
+package org.gerzog.jstataggr;
 
 /**
- * Mark field of a class as Aggregated.
- *
- * This mean Statistics Manager will handle value of this field
+ * Main entry point to handle Statistics. Updates aggregated statistics data for
+ * each annotated class.
  *
  * @author Nikolay Lagutko (nikolay.lagutko@mail.com)
  */
-@Target(ElementType.FIELD)
-@Retention(RetentionPolicy.RUNTIME)
-@Documented
-public @interface Aggregated {
+public interface IStatisticsHandler {
 
 	/**
-	 * Aggregation types affected for annotated field
+	 * Updates aggregated data based on entry class annotations
 	 */
-	public AggregationType[] value() default {};
+	void handleStatistics(Object statisticsEntry);
 
 }

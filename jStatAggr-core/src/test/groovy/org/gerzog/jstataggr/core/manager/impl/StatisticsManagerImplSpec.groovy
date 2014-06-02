@@ -13,16 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gerzog.jstataggr.core.internal.impl
+package org.gerzog.jstataggr.core.manager.impl
 
 import java.lang.invoke.MethodHandle
 
-import org.gerzog.jstataggr.core.AggregationType
-import org.gerzog.jstataggr.core.IStatisticsManager
-import org.gerzog.jstataggr.core.annotations.Aggregated
-import org.gerzog.jstataggr.core.annotations.StatisticsEntry
-import org.gerzog.jstataggr.core.annotations.StatisticsKey
-import org.gerzog.jstataggr.core.manager.impl.StatisticsManagerImpl
+import org.gerzog.jstataggr.AggregationType
+import org.gerzog.jstataggr.IStatisticsManager
+import org.gerzog.jstataggr.core.Aggregated
+import org.gerzog.jstataggr.core.StatisticsEntry
+import org.gerzog.jstataggr.core.StatisticsKey
 import org.gerzog.jstataggr.core.manager.impl.StatisticsCollector.StatisticsCollectorBuilder
 
 import spock.lang.Specification
@@ -52,8 +51,6 @@ class StatisticsManagerImplSpec extends Specification {
 		private String field
 	}
 
-	final String NAME = "stats"
-
 	IStatisticsManager manager = Spy(StatisticsManagerImpl)
 
 	Class<?> clazz = Statistics.class
@@ -62,27 +59,37 @@ class StatisticsManagerImplSpec extends Specification {
 
 	StatisticsCollectorBuilder builder = Mock(StatisticsCollectorBuilder)
 
+	String statisticsName
+
+	static int statisticsIndex
+
+	def setup() {
+		statisticsName = "Stats${statisticsIndex}"
+
+		statisticsIndex++
+	}
+
 	def "check collector created"() {
 		when:
-		manager.updateStatistics(statistics, clazz, NAME)
+		manager.updateStatistics(statistics, clazz, statisticsName)
 
 		then:
-		1 * manager.createCollector(clazz, NAME)
+		1 * manager.createCollector(clazz, statisticsName)
 	}
 
 	def "check no collector duplications"() {
 		when:
-		def collector1 = manager.updateStatistics(statistics, clazz, NAME)
-		def collector2 = manager.updateStatistics(statistics, clazz, NAME)
+		def collector1 = manager.updateStatistics(statistics, clazz, statisticsName)
+		def collector2 = manager.updateStatistics(statistics, clazz, statisticsName)
 
 		then:
 		collector1.is(collector2)
-		1 * manager.createCollector(clazz, NAME)
+		1 * manager.createCollector(clazz, statisticsName)
 	}
 
 	def "check collector creation"() {
 		when:
-		manager.createCollector(clazz, NAME)
+		manager.createCollector(clazz, statisticsName)
 
 		then:
 		1 * manager.initializeCollector(clazz, _ as StatisticsCollectorBuilder)

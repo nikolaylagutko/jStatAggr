@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright (C)2014 - Nikolay Lagutko <nikolay.lagutko@mail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,13 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gerzog.jstataggr.core.internal.impl;
-
-import spock.lang.Specification
+package org.gerzog.jstataggr;
 
 /**
- * @author Nikolay Lagutko (nikolay.lagutko@mail.com)
+ * Type of field Aggregation
  *
+ * @author Nikolay Lagutko (nikolay.lagutko@mail.com)
  */
-class StatisticsCollectorSpec extends Specification {
+public enum AggregationType {
+	/*
+	 * Will be aggregated only count of events (in case of array/collections
+	 * it will be called corresponding method)
+	 */
+	COUNT,
+	/*
+	 * Will be aggregated maximal value of field
+	 */
+	MAX,
+	/*
+	 * Will be aggregated minimal value of field
+	 */
+	MIN,
+	/*
+	 * Will be aggregated average value of field
+	 */
+	AVERAGE,
+	/*
+	 * Will be aggregated sum of all values for this field
+	 */
+	SUM;
 }

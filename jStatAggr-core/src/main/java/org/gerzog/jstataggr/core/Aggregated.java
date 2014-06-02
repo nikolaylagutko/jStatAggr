@@ -15,31 +15,29 @@
  */
 package org.gerzog.jstataggr.core;
 
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+import org.gerzog.jstataggr.AggregationType;
+
 /**
- * Type of field Aggregation
+ * Mark field of a class as Aggregated.
+ *
+ * This mean Statistics Manager will handle value of this field
  *
  * @author Nikolay Lagutko (nikolay.lagutko@mail.com)
  */
-public enum AggregationType {
-	/*
-	 * Will be aggregated only count of events (in case of array/collections
-	 * it will be called corresponding method)
+@Target(ElementType.FIELD)
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+public @interface Aggregated {
+
+	/**
+	 * Aggregation types affected for annotated field
 	 */
-	COUNT,
-	/*
-	 * Will be aggregated maximal value of field
-	 */
-	MAX,
-	/*
-	 * Will be aggregated minimal value of field
-	 */
-	MIN,
-	/*
-	 * Will be aggregated average value of field
-	 */
-	AVERAGE,
-	/*
-	 * Will be aggregated sum of all values for this field
-	 */
-	SUM;
+	public AggregationType[] value() default {};
+
 }

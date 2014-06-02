@@ -15,7 +15,7 @@
  */
 package org.gerzog.jstataggr.core.impl;
 
-import org.gerzog.jstataggr.core.IStatisticsManager;
+import org.gerzog.jstataggr.IStatisticsManager;
 import org.gerzog.jstataggr.core.internal.impl.AbstractStatisticsHandler;
 
 /**

@@ -25,9 +25,9 @@ import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.gerzog.jstataggr.core.IStatisticsManager;
-import org.gerzog.jstataggr.core.annotations.Aggregated;
-import org.gerzog.jstataggr.core.annotations.StatisticsKey;
+import org.gerzog.jstataggr.IStatisticsManager;
+import org.gerzog.jstataggr.core.Aggregated;
+import org.gerzog.jstataggr.core.StatisticsKey;
 import org.gerzog.jstataggr.core.manager.impl.StatisticsCollector.StatisticsCollectorBuilder;
 
 /**
@@ -39,8 +39,7 @@ public class StatisticsManagerImpl implements IStatisticsManager {
 	private final Map<String, StatisticsCollector> collectors = new ConcurrentHashMap<>();
 
 	@Override
-	public void updateStatistics(final Object statisticsEntry,
-			final Class<?> statisticsClass, final String statisticsName) {
+	public void updateStatistics(final Object statisticsEntry, final Class<?> statisticsClass, final String statisticsName) {
 		StatisticsCollector collector = collectors.get(statisticsName);
 
 		if (collector == null) {
@@ -48,60 +47,49 @@ public class StatisticsManagerImpl implements IStatisticsManager {
 		}
 	}
 
-	protected synchronized StatisticsCollector createCollector(
-			final Class<?> statisticsClass, final String statisticsName) {
-		final StatisticsCollectorBuilder builder = new StatisticsCollectorBuilder(
-				statisticsName);
+	protected synchronized StatisticsCollector createCollector(final Class<?> statisticsClass, final String statisticsName) {
+		final StatisticsCollectorBuilder builder = new StatisticsCollectorBuilder(statisticsName);
 
 		initializeCollector(statisticsClass, builder);
 
 		final StatisticsCollector result = builder.build();
 
-		final StatisticsCollector previous = collectors.putIfAbsent(
-				statisticsName, result);
+		final StatisticsCollector previous = collectors.putIfAbsent(statisticsName, result);
 
 		return previous == null ? result : result;
 	}
 
-	protected void initializeCollector(final Class<?> statisticsClass,
-			final StatisticsCollectorBuilder builder) {
+	protected void initializeCollector(final Class<?> statisticsClass, final StatisticsCollectorBuilder builder) {
 		for (final Field field : statisticsClass.getDeclaredFields()) {
 			if (field.isAnnotationPresent(StatisticsKey.class)) {
 				appendStatisticsKeys(builder, statisticsClass, field);
 			}
 
 			if (field.isAnnotationPresent(Aggregated.class)) {
-				final Aggregated annotation = field
-						.getAnnotation(Aggregated.class);
+				final Aggregated annotation = field.getAnnotation(Aggregated.class);
 				appendAggregation(builder, statisticsClass, field, annotation);
 			}
 		}
 	}
 
-	protected void appendStatisticsKeys(
-			final StatisticsCollectorBuilder builder,
-			final Class<?> statisticsClass, final Field field) {
+	protected void appendStatisticsKeys(final StatisticsCollectorBuilder builder, final Class<?> statisticsClass, final Field field) {
 		final MethodHandle getter = findGetter(statisticsClass, field);
 
 		builder.addStatisticsKey(field, getter);
 	}
 
-	protected void appendAggregation(final StatisticsCollectorBuilder builder,
-			final Class<?> statisticsClass, final Field field,
-			final Aggregated annotation) {
+	protected void appendAggregation(final StatisticsCollectorBuilder builder, final Class<?> statisticsClass, final Field field, final Aggregated annotation) {
 		final MethodHandle getter = findGetter(statisticsClass, field);
 
 		builder.addAggregation(field, annotation.value(), getter);
 	}
 
-	protected MethodHandle findGetter(final Class<?> statisticsClass,
-			final Field field) {
+	protected MethodHandle findGetter(final Class<?> statisticsClass, final Field field) {
 		return propogate(() -> {
-			final Method readMethod = new PropertyDescriptor(field.getName(),
-					statisticsClass).getReadMethod();
+			final Method readMethod = new PropertyDescriptor(field.getName(), statisticsClass).getReadMethod();
 
 			return MethodHandles.lookup().unreflect(readMethod);
-		}, (e) -> new IllegalStateException(
-				"There is no public getter for field <" + field + ">", e));
+		}, (e) -> new IllegalStateException("There is no public getter for field <" + field + ">", e));
 	}
+
 }

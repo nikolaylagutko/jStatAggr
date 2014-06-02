@@ -15,7 +15,7 @@
  */
 package org.gerzog.jstataggr.core.functions;
 
-import org.gerzog.jstataggr.core.AggregationType;
+import org.gerzog.jstataggr.AggregationType;
 
 /**
  * @author Nikolay Lagutko (nikolay.lagutko@mail.com)

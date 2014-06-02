@@ -15,7 +15,7 @@
  */
 package org.gerzog.jstataggr.core.templates
 
-import org.gerzog.jstataggr.core.AggregationType
+import org.gerzog.jstataggr.AggregationType
 
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -36,10 +36,10 @@ class TemplateHelperSpec extends Specification {
 
 	def "check method creation"() {
 		when:
-		def result = TemplateHelper.method('prefix', 'value', 'postfix', Integer.class, '', String, 'param1', Specification, 'param2')
+		def result = TemplateHelper.method('value', Integer.class, '', String, 'param1', Specification, 'param2')
 
 		then:
-		result == 'public java.lang.Integer prefixValuePostfix(java.lang.String param1, spock.lang.Specification param2) {}'
+		result == 'public java.lang.Integer value(java.lang.String param1, spock.lang.Specification param2) {}'
 	}
 
 	def "check getter method body"() {
@@ -72,7 +72,7 @@ class TemplateHelperSpec extends Specification {
 		def result = TemplateHelper.simpleUpdaterBody('value', aggregation)
 
 		then:
-		result == "org.gerzog.jstataggr.core.functions.FunctionHelper.apply(org.gerzog.jstataggr.core.AggregationType.${aggregation.name()}, this.value, value);"
+		result == "org.gerzog.jstataggr.core.functions.FunctionHelper.apply(org.gerzog.jstataggr.AggregationType.${aggregation.name()}, this.value, value);"
 
 		where:
 		aggregation << [

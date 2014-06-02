@@ -17,7 +17,7 @@ package org.gerzog.jstataggr.core.impl
 
 import java.util.concurrent.ExecutorService
 
-import org.gerzog.jstataggr.core.IStatisticsHandler
+import org.gerzog.jstataggr.IStatisticsHandler;
 
 import spock.lang.Specification
 
