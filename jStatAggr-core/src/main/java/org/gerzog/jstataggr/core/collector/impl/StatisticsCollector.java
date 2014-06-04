@@ -30,12 +30,11 @@ import javassist.ClassPool;
 import javassist.CtClass;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
 import org.gerzog.jstataggr.AggregationType;
 import org.gerzog.jstataggr.IStatisticsFilter;
 import org.gerzog.jstataggr.IStatisticsKey;
 import org.gerzog.jstataggr.core.collector.impl.StatisticsKey.StatisticsKeyBuilder;
+import org.gerzog.jstataggr.core.expressions.IExpressionHandler;
 import org.gerzog.jstataggr.core.manager.impl.internal.IStatisticsField;
 import org.gerzog.jstataggr.core.manager.impl.internal.StatisticsFields;
 
@@ -47,41 +46,81 @@ public class StatisticsCollector {
 
 	private static final String PACKAGE_PREFIX = "org.gerzog.jstataggr.core.manager.impl.generated.";
 
+	private static class FieldInfo {
+
+		private final String name;
+
+		private final String expression;
+
+		private final MethodHandle getter;
+
+		private MethodHandle accessor;
+
+		public FieldInfo(final String name, final String expression, final MethodHandle getter) {
+			this.name = name;
+			this.expression = expression;
+			this.getter = getter;
+		}
+
+		public void setAccessor(final MethodHandle accessor) {
+			this.accessor = accessor;
+		}
+
+		public String getName() {
+			return name;
+		}
+
+		public String getExpression() {
+			return expression;
+		}
+
+		public MethodHandle getGetter() {
+			return getter;
+		}
+
+		public MethodHandle getAccessor() {
+			return accessor;
+		}
+	}
+
 	public static class StatisticsCollectorBuilder {
 
 		private final String className;
 
-		private final StatisticsCollector result = new StatisticsCollector();
+		private final StatisticsCollector result;
 
-		private final Map<IStatisticsField, MethodHandle> fieldInfo = new HashMap<>();
+		private final Map<IStatisticsField, FieldInfo> statisticsFieldInfo = new HashMap<>();
 
-		public StatisticsCollectorBuilder(final String className) {
+		public StatisticsCollectorBuilder(final String className, final IExpressionHandler expressionHandler) {
+			this.result = new StatisticsCollector(expressionHandler);
 			this.className = className;
 		}
 
-		public StatisticsCollectorBuilder addStatisticsKey(final Field field,
-				final MethodHandle getter) {
-			fieldInfo.put(
-					StatisticsFields.forStatisticsKey(field.getName(),
-							field.getType()), getter);
+		public StatisticsCollectorBuilder addStatisticsKey(final Field field, final MethodHandle getter, final String expression) {
+
+			add(field.getName(), expression, StatisticsFields.forStatisticsKey(field.getName(), field.getType()), getter);
 
 			return this;
 		}
 
-		public StatisticsCollectorBuilder addAggregation(final Field field,
-				final AggregationType[] aggregationTypes,
-				final MethodHandle getter) {
+		public StatisticsCollectorBuilder addAggregation(final Field field, final AggregationType[] aggregationTypes, final MethodHandle getter, final String expression) {
 			for (final AggregationType type : aggregationTypes) {
-				fieldInfo.put(
-						StatisticsFields.forAggregation(field.getName(),
-								field.getType(), type), getter);
+				add(field.getName(), expression, StatisticsFields.forAggregation(field.getName(), field.getType(), type), getter);
 			}
 
 			return this;
 		}
 
+		private StatisticsCollectorBuilder add(final String name, final String expression, final IStatisticsField statisticsField, final MethodHandle getter) {
+			final FieldInfo fieldInfo = new FieldInfo(name, expression, getter);
+
+			statisticsFieldInfo.put(statisticsField, fieldInfo);
+
+			return this;
+		}
+
 		public StatisticsCollector build() {
-			result.classInfo = generateClassInfo(className, fieldInfo);
+			result.classInfo = generateClassInfo(className, statisticsFieldInfo);
 
 			return result;
 		}
@@ -91,24 +130,24 @@ public class StatisticsCollector {
 	private static class CollectorClassInfo {
 		private final Class<?> bucketClass;
 
-		private final Map<String, Pair<MethodHandle, MethodHandle>> statisticsKeyHandles = new HashMap<>();
+		private final Map<String, FieldInfo> keys = new HashMap<>();
 
-		private final List<Pair<MethodHandle, MethodHandle>> statisticsUpdaters = new ArrayList<>();
+		private final List<FieldInfo> updaters = new ArrayList<>();
 
 		public CollectorClassInfo(final Class<?> bucketClass) {
 			this.bucketClass = bucketClass;
 		}
 
-		public Map<String, Pair<MethodHandle, MethodHandle>> getStatisticsKeyHandles() {
-			return statisticsKeyHandles;
-		}
-
-		public List<Pair<MethodHandle, MethodHandle>> getStatisticsUpdaters() {
-			return statisticsUpdaters;
-		}
-
 		public Class<?> getBucketClass() {
 			return bucketClass;
+		}
+
+		public Map<String, FieldInfo> getKeys() {
+			return keys;
+		}
+
+		public List<FieldInfo> getUpdaters() {
+			return updaters;
 		}
 	}
 
@@ -116,18 +155,17 @@ public class StatisticsCollector {
 
 	private final Map<IStatisticsKey, Object> statistics = new ConcurrentHashMap<>();
 
-	// LN: 2.06.2014, made package-visible for tests
-	StatisticsCollector() {
+	private final IExpressionHandler expressionHandler;
 
+	// LN: 2.06.2014, made package-visible for tests
+	StatisticsCollector(final IExpressionHandler expressionHandler) {
+		this.expressionHandler = expressionHandler;
 	}
 
-	protected static CollectorClassInfo generateClassInfo(
-			final String className,
-			final Map<IStatisticsField, MethodHandle> fieldInfo) {
+	protected static CollectorClassInfo generateClassInfo(final String className, final Map<IStatisticsField, FieldInfo> fieldInfo) {
 		final ClassPool pool = ClassPool.getDefault();
 
-		final CtClass clazz = pool.makeClass(PACKAGE_PREFIX
-				+ StringUtils.capitalize(className));
+		final CtClass clazz = pool.makeClass(PACKAGE_PREFIX + StringUtils.capitalize(className));
 
 		fieldInfo.keySet().forEach(info -> {
 			propogate(() -> info.generate(clazz));
@@ -138,27 +176,22 @@ public class StatisticsCollector {
 		});
 	}
 
-	protected static CollectorClassInfo generateClassInfo(final Class<?> clazz,
-			final Map<IStatisticsField, MethodHandle> fieldInfo) {
+	protected static CollectorClassInfo generateClassInfo(final Class<?> clazz, final Map<IStatisticsField, FieldInfo> fieldInfo) {
 		final CollectorClassInfo result = new CollectorClassInfo(clazz);
 
-		fieldInfo
-				.forEach((info, getterMethod) -> {
-					propogate(() -> {
-						final MethodHandle accessMethod = info
-								.getAccessMethodHandle(clazz);
+		fieldInfo.forEach((statisticsInfo, bucketInfo) -> {
+			propogate(() -> {
+				final MethodHandle accessMethod = statisticsInfo.getAccessMethodHandle(clazz);
 
-						final Pair<MethodHandle, MethodHandle> methodPair = ImmutablePair
-								.of(getterMethod, accessMethod);
+				bucketInfo.setAccessor(accessMethod);
 
-						if (info.isAggregator()) {
-							result.getStatisticsUpdaters().add(methodPair);
-						} else {
-							result.getStatisticsKeyHandles().put(
-									info.getFieldName(), methodPair);
-						}
-					});
-				});
+				if (statisticsInfo.isAggregator()) {
+					result.getUpdaters().add(bucketInfo);
+				} else {
+					result.getKeys().put(bucketInfo.getName(), bucketInfo);
+				}
+			});
+		});
 
 		return result;
 	}
@@ -169,13 +202,14 @@ public class StatisticsCollector {
 		updateStatistics(statisticsBucket, statisticsData);
 	}
 
-	protected void updateStatistics(final Object statisticsBucket,
-			final Object statisticsData) {
-		classInfo.getStatisticsUpdaters().forEach(handles -> {
+	protected void updateStatistics(final Object statisticsBucket, final Object statisticsData) {
+		classInfo.getUpdaters().forEach(updater -> {
 			propogate(() -> {
-				final Object value = handles.getLeft().invoke(statisticsData);
+				Object value = updater.getGetter().invoke(statisticsData);
 
-				handles.getRight().invoke(statisticsBucket, value);
+				value = updateValue(value, updater.getExpression());
+
+				updater.getAccessor().invoke(statisticsBucket, value);
 			});
 		});
 	}
@@ -195,9 +229,11 @@ public class StatisticsCollector {
 	protected IStatisticsKey generateStatisticsKey(final Object statisticsData) {
 		final StatisticsKeyBuilder builder = new StatisticsKeyBuilder();
 
-		classInfo.getStatisticsKeyHandles().forEach((name, handles) -> {
+		classInfo.getKeys().forEach((name, handles) -> {
 			propogate(() -> {
-				final Object value = handles.getLeft().invoke(statisticsData);
+				Object value = handles.getGetter().invoke(statisticsData);
+
+				value = updateValue(value, handles.getExpression());
 
 				builder.withParameter(name, value);
 			});
@@ -206,16 +242,17 @@ public class StatisticsCollector {
 		return builder.build();
 	}
 
-	protected Object generateStatisticsBucket(final IStatisticsKey key,
-			final Object statisticsData) {
+	protected Object generateStatisticsBucket(final IStatisticsKey key, final Object statisticsData) {
 		return propogate(() -> {
 			final Object result = classInfo.getBucketClass().newInstance();
 
-			classInfo.getStatisticsKeyHandles().forEach((name, handles) -> {
+			classInfo.getKeys().forEach((name, handles) -> {
 				propogate(() -> {
-					final Object value = key.get(name);
+					Object value = key.get(name);
 
-					handles.getRight().invoke(result, value);
+					value = updateValue(value, handles.getExpression());
+
+					handles.getAccessor().invoke(result, value);
 				});
 			});
 
@@ -229,20 +266,25 @@ public class StatisticsCollector {
 		return statistics;
 	}
 
-	public Collection<Object> collectStatistics(final IStatisticsFilter filter,
-			final boolean cleanup) {
+	public Collection<Object> collectStatistics(final IStatisticsFilter filter, final boolean cleanup) {
 		final Collection<Object> result = new ArrayList<>();
 
-		statistics.keySet().forEach(
-				key -> {
-					if (filter.isApplied(key)) {
-						final Object data = cleanup ? statistics.remove(key)
-								: statistics.get(key);
+		statistics.keySet().forEach(key -> {
+			if (filter.isApplied(key)) {
+				final Object data = cleanup ? statistics.remove(key) : statistics.get(key);
 
-						result.add(data);
-					}
-				});
+				result.add(data);
+			}
+		});
 
 		return result;
+	}
+
+	protected Object updateValue(final Object original, final String expression) throws Exception {
+		if ((expressionHandler != null) && (expression != null)) {
+			return expressionHandler.invokeExpression(expression, original);
+		}
+
+		return original;
 	}
 }

@@ -21,10 +21,12 @@ import org.gerzog.jstataggr.AggregationType
 import org.gerzog.jstataggr.IStatisticsFilter
 import org.gerzog.jstataggr.IStatisticsManager
 import org.gerzog.jstataggr.annotations.Aggregated
+import org.gerzog.jstataggr.annotations.Expression
 import org.gerzog.jstataggr.annotations.StatisticsEntry
 import org.gerzog.jstataggr.annotations.StatisticsKey
 import org.gerzog.jstataggr.core.collector.impl.StatisticsCollector
 import org.gerzog.jstataggr.core.collector.impl.StatisticsCollector.StatisticsCollectorBuilder
+import org.gerzog.jstataggr.core.expressions.IExpressionHandler
 
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -40,6 +42,10 @@ class StatisticsManagerImplSpec extends Specification {
 
 		@StatisticsKey
 		String name
+
+		@StatisticsKey
+		@Expression('2 + 3')
+		String expression
 
 		@Aggregated([AggregationType.MIN, AggregationType.SUM, AggregationType.COUNT, AggregationType.AVERAGE])
 		int value
@@ -103,7 +109,25 @@ class StatisticsManagerImplSpec extends Specification {
 		String field
 	}
 
-	IStatisticsManager manager = Spy(StatisticsManagerImpl)
+	@StatisticsEntry
+	class ExpressionWithoutHandler {
+
+		@Aggregated(AggregationType.MIN)
+		@Expression('2 + 3')
+		int field
+	}
+
+	@StatisticsEntry
+	class EmptyExpression {
+
+		@Aggregated(AggregationType.MIN)
+		@Expression('')
+		int field
+	}
+
+	IExpressionHandler expressionHandler = Mock(IExpressionHandler)
+
+	IStatisticsManager manager = Spy(StatisticsManagerImpl, constructorArgs: [expressionHandler])
 
 	Class<?> clazz = Statistics
 
@@ -151,18 +175,20 @@ class StatisticsManagerImplSpec extends Specification {
 		setup:
 		def nameField = Statistics.getDeclaredField('name')
 		def valueField = Statistics.getDeclaredField('value')
+		def expressionField = Statistics.getDeclaredField('expression')
 
 		when:
 		manager.initializeCollector(clazz, builder)
 
 		then:
-		1 * builder.addStatisticsKey(nameField, _ as MethodHandle)
+		1 * builder.addStatisticsKey(nameField, _ as MethodHandle, null)
 		1 * builder.addAggregation(valueField, [
 			AggregationType.MIN,
 			AggregationType.SUM,
 			AggregationType.COUNT,
 			AggregationType.AVERAGE
-		], _ as MethodHandle)
+		], _ as MethodHandle, null)
+		1 * builder.addStatisticsKey(expressionField, _ as MethodHandle, '2 + 3')
 	}
 
 	def "check exception if getter not exists"() {
@@ -178,10 +204,10 @@ class StatisticsManagerImplSpec extends Specification {
 		def filter = Mock(IStatisticsFilter)
 		def collector = Mock(StatisticsCollector)
 
-		manager.collectors.put('name', collector)
+		manager.collectors.put(statisticsName, collector)
 
 		when:
-		manager.collectStatistics('name', filter, false)
+		manager.collectStatistics(statisticsName, filter, false)
 
 		then:
 		1 * collector.collectStatistics(filter, false)
@@ -192,7 +218,7 @@ class StatisticsManagerImplSpec extends Specification {
 		def filter = Mock(IStatisticsFilter)
 		def collector = Mock(StatisticsCollector)
 
-		manager.collectors.put('name', collector)
+		manager.collectors.put(statisticsName, collector)
 
 		when:
 		manager.collectStatistics('another name', filter, false)
@@ -203,7 +229,7 @@ class StatisticsManagerImplSpec extends Specification {
 
 	def "check validation failed if statisticskey is also marked as aggregated"() {
 		when:
-		manager.updateStatistics(new StatisticsKeyIsAggregated(), 'statistics name')
+		manager.updateStatistics(new StatisticsKeyIsAggregated(), statisticsName)
 
 		then:
 		thrown(IllegalStateException)
@@ -215,7 +241,7 @@ class StatisticsManagerImplSpec extends Specification {
 		def instance = clazz.newInstance()
 
 		when:
-		manager.updateStatistics(instance, 'name')
+		manager.updateStatistics(instance, statisticsName)
 
 		then:
 		thrown(IllegalStateException)
@@ -231,9 +257,28 @@ class StatisticsManagerImplSpec extends Specification {
 
 	def "check statistics type marked invalid if it has no statisticskeys"() {
 		when:
-		manager.updateStatistics(new NoStatisticsKey(), 'name')
+		manager.updateStatistics(new NoStatisticsKey(), statisticsName)
 
 		then:
 		thrown(IllegalStateException)
+	}
+
+	def "check type is invalid when @Expression exists but expression handler is null"() {
+		setup:
+		manager.expressionHandler = null
+
+		when:
+		manager.updateStatistics(new ExpressionWithoutHandler(), statisticsName)
+
+		then:
+		thrown(IllegalStateException)
+	}
+
+	def "check type is invalid when expression is empty"() {
+		when:
+		manager.updateStatistics(new EmptyExpression(), statisticsName)
+
+		then:
+		thrown(IllegalArgumentException)
 	}
 }

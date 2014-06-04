@@ -27,13 +27,16 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.commons.lang3.StringUtils;
 import org.gerzog.jstataggr.AggregationType;
 import org.gerzog.jstataggr.IStatisticsFilter;
 import org.gerzog.jstataggr.IStatisticsManager;
 import org.gerzog.jstataggr.annotations.Aggregated;
+import org.gerzog.jstataggr.annotations.Expression;
 import org.gerzog.jstataggr.annotations.StatisticsKey;
 import org.gerzog.jstataggr.core.collector.impl.StatisticsCollector;
 import org.gerzog.jstataggr.core.collector.impl.StatisticsCollector.StatisticsCollectorBuilder;
+import org.gerzog.jstataggr.core.expressions.IExpressionHandler;
 
 /**
  * @author Nikolay Lagutko (nikolay.lagutko@mail.com)
@@ -53,6 +56,20 @@ public class StatisticsManagerImpl implements IStatisticsManager {
 
 	private final Map<String, StatisticsCollector> collectors = new ConcurrentHashMap<>();
 
+	private IExpressionHandler expressionHandler;
+
+	public StatisticsManagerImpl() {
+		this(null);
+	}
+
+	public StatisticsManagerImpl(final IExpressionHandler expressionHandler) {
+		this.expressionHandler = expressionHandler;
+	}
+
+	public void setExpressionHandler(final IExpressionHandler expressionHandler) {
+		this.expressionHandler = expressionHandler;
+	}
+
 	@Override
 	public void updateStatistics(final Object statisticsEntry, final String statisticsName) {
 		StatisticsCollector collector = collectors.get(statisticsName);
@@ -65,7 +82,7 @@ public class StatisticsManagerImpl implements IStatisticsManager {
 	}
 
 	protected synchronized StatisticsCollector createCollector(final Class<?> statisticsClass, final String statisticsName) {
-		final StatisticsCollectorBuilder builder = new StatisticsCollectorBuilder(statisticsName);
+		final StatisticsCollectorBuilder builder = new StatisticsCollectorBuilder(statisticsName, expressionHandler);
 
 		initializeCollector(statisticsClass, builder);
 
@@ -78,10 +95,20 @@ public class StatisticsManagerImpl implements IStatisticsManager {
 
 	protected void initializeCollector(final Class<?> statisticsClass, final StatisticsCollectorBuilder builder) {
 		for (final Field field : statisticsClass.getDeclaredFields()) {
+			String expression = null;
+
+			if (field.isAnnotationPresent(Expression.class)) {
+				final Expression annotation = field.getAnnotation(Expression.class);
+
+				validateExpessionField(field, annotation);
+
+				expression = annotation.value();
+			}
+
 			if (field.isAnnotationPresent(StatisticsKey.class)) {
 				validateStatisticsKeyField(field);
 
-				appendStatisticsKeys(builder, statisticsClass, field);
+				appendStatisticsKeys(builder, statisticsClass, field, expression);
 			}
 
 			if (field.isAnnotationPresent(Aggregated.class)) {
@@ -89,21 +116,21 @@ public class StatisticsManagerImpl implements IStatisticsManager {
 
 				validateAggregationField(field, annotation);
 
-				appendAggregation(builder, statisticsClass, field, annotation);
+				appendAggregation(builder, statisticsClass, field, annotation, expression);
 			}
 		}
 	}
 
-	protected void appendStatisticsKeys(final StatisticsCollectorBuilder builder, final Class<?> statisticsClass, final Field field) {
+	protected void appendStatisticsKeys(final StatisticsCollectorBuilder builder, final Class<?> statisticsClass, final Field field, final String expression) {
 		final MethodHandle getter = findGetter(statisticsClass, field);
 
-		builder.addStatisticsKey(field, getter);
+		builder.addStatisticsKey(field, getter, expression);
 	}
 
-	protected void appendAggregation(final StatisticsCollectorBuilder builder, final Class<?> statisticsClass, final Field field, final Aggregated annotation) {
+	protected void appendAggregation(final StatisticsCollectorBuilder builder, final Class<?> statisticsClass, final Field field, final Aggregated annotation, final String expression) {
 		final MethodHandle getter = findGetter(statisticsClass, field);
 
-		builder.addAggregation(field, annotation.value(), getter);
+		builder.addAggregation(field, annotation.value(), getter, expression);
 	}
 
 	protected MethodHandle findGetter(final Class<?> statisticsClass, final Field field) {
@@ -177,6 +204,18 @@ public class StatisticsManagerImpl implements IStatisticsManager {
 			if (!valid) {
 				throw new IllegalStateException("Field <" + field.getName() + "> is of unsupported type <" + field.getType().getSimpleName() + "> for aggregation <" + type + ">");
 			}
+		}
+	}
+
+	protected void validateExpessionField(final Field field, final Expression annotation) {
+		if (expressionHandler == null) {
+			throw new IllegalStateException("Field <" + field.getName() + "> cannot be annotated with @Expression since ExpressionHandler was not initialized");
+		}
+
+		final String expression = annotation.value();
+
+		if (StringUtils.isEmpty(expression)) {
+			throw new IllegalArgumentException("Expression cannot be an empty string");
 		}
 	}
 }
