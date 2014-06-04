@@ -1,3 +1,18 @@
+/**
+ * Copyright (C)2014 - Nikolay Lagutko <nikolay.lagutko@mail.com>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.gerzog.jstataggr.core.manager.impl.internal;
 
 import java.lang.invoke.MethodHandle;
@@ -23,9 +38,16 @@ abstract class AbstractStatisticsField implements IStatisticsField {
 
 	private final Class<?> dataType;
 
+	private final String modifier;
+
 	protected AbstractStatisticsField(final String originalFieldName, final Class<?> dataType) {
+		this("public", originalFieldName, dataType);
+	}
+
+	protected AbstractStatisticsField(final String modifier, final String originalFieldName, final Class<?> dataType) {
 		this.originalFieldName = originalFieldName;
 		this.dataType = dataType;
+		this.modifier = modifier;
 	}
 
 	@Override
@@ -44,7 +66,7 @@ abstract class AbstractStatisticsField implements IStatisticsField {
 	}
 
 	protected void generateGetter(final CtClass clazz) throws Exception {
-		final CtMethod method = CtMethod.make(TemplateHelper.getter(generateFieldName(), dataType), clazz);
+		final CtMethod method = CtMethod.make(TemplateHelper.getter(modifier, generateFieldName(), dataType), clazz);
 
 		clazz.addMethod(method);
 	}
@@ -54,7 +76,7 @@ abstract class AbstractStatisticsField implements IStatisticsField {
 	}
 
 	protected void generateSetter(final CtClass clazz) throws Exception {
-		final CtMethod method = CtMethod.make(TemplateHelper.setter(generateFieldName(), dataType), clazz);
+		final CtMethod method = CtMethod.make(TemplateHelper.setter(modifier, generateFieldName(), dataType), clazz);
 
 		clazz.addMethod(method);
 	}
@@ -68,7 +90,7 @@ abstract class AbstractStatisticsField implements IStatisticsField {
 	}
 
 	@Override
-	public MethodHandle getAccessMethod(final Class<?> clazz) throws Exception {
+	public MethodHandle getAccessMethodHandle(final Class<?> clazz) throws Exception {
 		final Method method = clazz.getMethod(getAccessMethodName(), getAccessMethodType());
 
 		return MethodHandles.lookup().unreflect(method);
@@ -77,4 +99,13 @@ abstract class AbstractStatisticsField implements IStatisticsField {
 	protected abstract String getAccessMethodName();
 
 	protected abstract Class<?> getAccessMethodType();
+
+	@Override
+	public String getFieldName() {
+		return originalFieldName;
+	}
+
+	protected String getModifier() {
+		return modifier;
+	}
 }

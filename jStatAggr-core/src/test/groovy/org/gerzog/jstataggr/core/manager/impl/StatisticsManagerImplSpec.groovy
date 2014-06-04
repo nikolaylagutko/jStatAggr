@@ -60,7 +60,7 @@ class StatisticsManagerImplSpec extends Specification {
 
 	IStatisticsManager manager = Spy(StatisticsManagerImpl)
 
-	Class<?> clazz = Statistics.class
+	Class<?> clazz = Statistics
 
 	Object statistics = new Statistics()
 

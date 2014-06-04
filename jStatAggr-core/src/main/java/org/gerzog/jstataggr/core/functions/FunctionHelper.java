@@ -109,4 +109,16 @@ public final class FunctionHelper {
 		}
 		return 1;
 	}
+
+	public static long apply(final long update, final long currentCount, final long currentAverage) {
+		final long sum = currentCount * currentAverage;
+
+		return (sum + update) / (currentCount + 1);
+	}
+
+	public static int apply(final int update, final int currentCount, final int currentAverage) {
+		final int sum = currentCount * currentAverage;
+
+		return (sum + update) / (currentCount + 1);
+	}
 }
