@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C)2014 - Nikolay Lagutko <nikolay.lagutko@mail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,14 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gerzog.jstataggr;
+package org.gerzog.jstataggr.expressions.spel
+
+import org.gerzog.jstataggr.core.expressions.IExpressionHandler
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.test.context.ContextConfiguration
+
+import spock.lang.Ignore
+import spock.lang.Specification
 
 /**
  * @author Nikolay Lagutko (nikolay.lagutko@mail.com)
  *
  */
-public interface IStatisticsKey {
+@Ignore
+@ContextConfiguration(classes = [TestContext.class])
+class SpelExpressionHandlerSpec extends Specification {
 
-	Object get(String name);
+	@Autowired
+	@Qualifier('expressionHandler')
+	IExpressionHandler handler
 
+	def "hallo"() {
+		when:
+		1 + 1
+
+		then:
+		true
+	}
 }
