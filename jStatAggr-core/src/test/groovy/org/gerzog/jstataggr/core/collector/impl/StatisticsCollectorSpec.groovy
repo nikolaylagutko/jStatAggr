@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gerzog.jstataggr.core.manager.impl
+package org.gerzog.jstataggr.core.collector.impl
 
 import org.gerzog.jstataggr.IStatisticsFilter
-import org.gerzog.jstataggr.core.manager.impl.StatisticsKey.StatisticsKeyBuilder
+import org.gerzog.jstataggr.core.collector.impl.StatisticsKey.StatisticsKeyBuilder
 
 import spock.lang.Specification
 

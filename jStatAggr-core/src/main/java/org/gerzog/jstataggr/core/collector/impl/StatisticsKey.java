@@ -13,28 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gerzog.jstataggr.core.manager.impl;
+package org.gerzog.jstataggr.core.collector.impl;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import org.gerzog.jstataggr.IStatisticsKey;
 
 /**
  * @author Nikolay Lagutko (nikolay.lagutko@mail.com)
  *
  */
-public class StatisticsKey {
+class StatisticsKey implements IStatisticsKey {
 
 	public static class StatisticsKeyBuilder {
 
 		private final StatisticsKey result = new StatisticsKey();
 
-		public StatisticsKeyBuilder withParameter(final String keyName, final Object keyValue) {
+		public StatisticsKeyBuilder withParameter(final String keyName,
+				final Object keyValue) {
 			result.keyParts.put(keyName, keyValue);
 
 			return this;
 		}
 
-		public StatisticsKey build() {
+		public IStatisticsKey build() {
 			result.generateHashCode();
 
 			return result;
@@ -54,6 +57,7 @@ public class StatisticsKey {
 		hashCode = keyParts.hashCode();
 	}
 
+	@Override
 	public Object get(final String name) {
 		return keyParts.get(name);
 	}

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gerzog.jstataggr.core.manager.impl;
+package org.gerzog.jstataggr.core.collector.impl;
 
 import static org.gerzog.jstataggr.core.utils.Throwables.propogate;
 
@@ -34,7 +34,8 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.gerzog.jstataggr.AggregationType;
 import org.gerzog.jstataggr.IStatisticsFilter;
-import org.gerzog.jstataggr.core.manager.impl.StatisticsKey.StatisticsKeyBuilder;
+import org.gerzog.jstataggr.IStatisticsKey;
+import org.gerzog.jstataggr.core.collector.impl.StatisticsKey.StatisticsKeyBuilder;
 import org.gerzog.jstataggr.core.manager.impl.internal.IStatisticsField;
 import org.gerzog.jstataggr.core.manager.impl.internal.StatisticsFields;
 
@@ -58,15 +59,22 @@ public class StatisticsCollector {
 			this.className = className;
 		}
 
-		public StatisticsCollectorBuilder addStatisticsKey(final Field field, final MethodHandle getter) {
-			fieldInfo.put(StatisticsFields.forStatisticsKey(field.getName(), field.getType()), getter);
+		public StatisticsCollectorBuilder addStatisticsKey(final Field field,
+				final MethodHandle getter) {
+			fieldInfo.put(
+					StatisticsFields.forStatisticsKey(field.getName(),
+							field.getType()), getter);
 
 			return this;
 		}
 
-		public StatisticsCollectorBuilder addAggregation(final Field field, final AggregationType[] aggregationTypes, final MethodHandle getter) {
+		public StatisticsCollectorBuilder addAggregation(final Field field,
+				final AggregationType[] aggregationTypes,
+				final MethodHandle getter) {
 			for (final AggregationType type : aggregationTypes) {
-				fieldInfo.put(StatisticsFields.forAggregation(field.getName(), field.getType(), type), getter);
+				fieldInfo.put(
+						StatisticsFields.forAggregation(field.getName(),
+								field.getType(), type), getter);
 			}
 
 			return this;
@@ -106,17 +114,20 @@ public class StatisticsCollector {
 
 	private CollectorClassInfo classInfo;
 
-	private final Map<StatisticsKey, Object> statistics = new ConcurrentHashMap<>();
+	private final Map<IStatisticsKey, Object> statistics = new ConcurrentHashMap<>();
 
 	// LN: 2.06.2014, made package-visible for tests
 	StatisticsCollector() {
 
 	}
 
-	protected static CollectorClassInfo generateClassInfo(final String className, final Map<IStatisticsField, MethodHandle> fieldInfo) {
+	protected static CollectorClassInfo generateClassInfo(
+			final String className,
+			final Map<IStatisticsField, MethodHandle> fieldInfo) {
 		final ClassPool pool = ClassPool.getDefault();
 
-		final CtClass clazz = pool.makeClass(PACKAGE_PREFIX + StringUtils.capitalize(className));
+		final CtClass clazz = pool.makeClass(PACKAGE_PREFIX
+				+ StringUtils.capitalize(className));
 
 		fieldInfo.keySet().forEach(info -> {
 			propogate(() -> info.generate(clazz));
@@ -127,22 +138,27 @@ public class StatisticsCollector {
 		});
 	}
 
-	protected static CollectorClassInfo generateClassInfo(final Class<?> clazz, final Map<IStatisticsField, MethodHandle> fieldInfo) {
+	protected static CollectorClassInfo generateClassInfo(final Class<?> clazz,
+			final Map<IStatisticsField, MethodHandle> fieldInfo) {
 		final CollectorClassInfo result = new CollectorClassInfo(clazz);
 
-		fieldInfo.forEach((info, getterMethod) -> {
-			propogate(() -> {
-				final MethodHandle accessMethod = info.getAccessMethodHandle(clazz);
+		fieldInfo
+				.forEach((info, getterMethod) -> {
+					propogate(() -> {
+						final MethodHandle accessMethod = info
+								.getAccessMethodHandle(clazz);
 
-				final Pair<MethodHandle, MethodHandle> methodPair = ImmutablePair.of(getterMethod, accessMethod);
+						final Pair<MethodHandle, MethodHandle> methodPair = ImmutablePair
+								.of(getterMethod, accessMethod);
 
-				if (info.isAggregator()) {
-					result.getStatisticsUpdaters().add(methodPair);
-				} else {
-					result.getStatisticsKeyHandles().put(info.getFieldName(), methodPair);
-				}
-			});
-		});
+						if (info.isAggregator()) {
+							result.getStatisticsUpdaters().add(methodPair);
+						} else {
+							result.getStatisticsKeyHandles().put(
+									info.getFieldName(), methodPair);
+						}
+					});
+				});
 
 		return result;
 	}
@@ -153,7 +169,8 @@ public class StatisticsCollector {
 		updateStatistics(statisticsBucket, statisticsData);
 	}
 
-	protected void updateStatistics(final Object statisticsBucket, final Object statisticsData) {
+	protected void updateStatistics(final Object statisticsBucket,
+			final Object statisticsData) {
 		classInfo.getStatisticsUpdaters().forEach(handles -> {
 			propogate(() -> {
 				final Object value = handles.getLeft().invoke(statisticsData);
@@ -164,7 +181,7 @@ public class StatisticsCollector {
 	}
 
 	protected Object getStatisticsBucket(final Object statisticsData) {
-		final StatisticsKey key = generateStatisticsKey(statisticsData);
+		final IStatisticsKey key = generateStatisticsKey(statisticsData);
 
 		Object statisticsBucket = statistics.get(key);
 
@@ -175,7 +192,7 @@ public class StatisticsCollector {
 		return statisticsBucket;
 	}
 
-	protected StatisticsKey generateStatisticsKey(final Object statisticsData) {
+	protected IStatisticsKey generateStatisticsKey(final Object statisticsData) {
 		final StatisticsKeyBuilder builder = new StatisticsKeyBuilder();
 
 		classInfo.getStatisticsKeyHandles().forEach((name, handles) -> {
@@ -189,7 +206,8 @@ public class StatisticsCollector {
 		return builder.build();
 	}
 
-	protected Object generateStatisticsBucket(final StatisticsKey key, final Object statisticsData) {
+	protected Object generateStatisticsBucket(final IStatisticsKey key,
+			final Object statisticsData) {
 		return propogate(() -> {
 			final Object result = classInfo.getBucketClass().newInstance();
 
@@ -207,20 +225,23 @@ public class StatisticsCollector {
 		});
 	}
 
-	protected Map<StatisticsKey, Object> getStatistics() {
+	protected Map<IStatisticsKey, Object> getStatistics() {
 		return statistics;
 	}
 
-	public Collection<Object> collectStatistics(final IStatisticsFilter filter, final boolean cleanup) {
+	public Collection<Object> collectStatistics(final IStatisticsFilter filter,
+			final boolean cleanup) {
 		final Collection<Object> result = new ArrayList<>();
 
-		statistics.keySet().forEach(key -> {
-			if (filter.isApplied(key)) {
-				final Object data = cleanup ? statistics.remove(key) : statistics.get(key);
+		statistics.keySet().forEach(
+				key -> {
+					if (filter.isApplied(key)) {
+						final Object data = cleanup ? statistics.remove(key)
+								: statistics.get(key);
 
-				result.add(data);
-			}
-		});
+						result.add(data);
+					}
+				});
 
 		return result;
 	}

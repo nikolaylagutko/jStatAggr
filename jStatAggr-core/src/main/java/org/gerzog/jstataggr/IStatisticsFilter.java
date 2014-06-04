@@ -15,7 +15,6 @@
  */
 package org.gerzog.jstataggr;
 
-import org.gerzog.jstataggr.core.manager.impl.StatisticsKey;
 
 /**
  * @author Nikolay Lagutko (nikolay.lagutko@mail.com)
@@ -24,6 +23,6 @@ import org.gerzog.jstataggr.core.manager.impl.StatisticsKey;
 @FunctionalInterface
 public interface IStatisticsFilter {
 
-	boolean isApplied(StatisticsKey statisticsKey);
+	boolean isApplied(IStatisticsKey statisticsKey);
 
 }

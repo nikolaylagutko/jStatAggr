@@ -31,7 +31,8 @@ import org.gerzog.jstataggr.IStatisticsFilter;
 import org.gerzog.jstataggr.IStatisticsManager;
 import org.gerzog.jstataggr.annotations.Aggregated;
 import org.gerzog.jstataggr.annotations.StatisticsKey;
-import org.gerzog.jstataggr.core.manager.impl.StatisticsCollector.StatisticsCollectorBuilder;
+import org.gerzog.jstataggr.core.collector.impl.StatisticsCollector;
+import org.gerzog.jstataggr.core.collector.impl.StatisticsCollector.StatisticsCollectorBuilder;
 
 /**
  * @author Nikolay Lagutko (nikolay.lagutko@mail.com)

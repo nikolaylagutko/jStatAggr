@@ -23,7 +23,8 @@ import org.gerzog.jstataggr.IStatisticsManager
 import org.gerzog.jstataggr.annotations.Aggregated
 import org.gerzog.jstataggr.annotations.StatisticsEntry
 import org.gerzog.jstataggr.annotations.StatisticsKey
-import org.gerzog.jstataggr.core.manager.impl.StatisticsCollector.StatisticsCollectorBuilder
+import org.gerzog.jstataggr.core.collector.impl.StatisticsCollector
+import org.gerzog.jstataggr.core.collector.impl.StatisticsCollector.StatisticsCollectorBuilder
 
 import spock.lang.Specification
 

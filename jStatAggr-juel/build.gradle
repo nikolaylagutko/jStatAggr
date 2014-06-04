@@ -1,0 +1,6 @@
+dependencies {
+	compile project(':jStatAggr-core')
+	
+	compile group: 'de.odysseus.juel',	name: 'juel-api',	version: juelVersion
+	compile group: 'de.odysseus.juel',	name: 'juel-impl',	version: juelVersion
+}
