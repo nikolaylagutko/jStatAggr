@@ -27,6 +27,7 @@ import org.gerzog.jstataggr.core.collector.impl.StatisticsCollector
 import org.gerzog.jstataggr.core.collector.impl.StatisticsCollector.StatisticsCollectorBuilder
 
 import spock.lang.Specification
+import spock.lang.Unroll
 
 /**
  * @author Nikolay Lagutko (nikolay.lagutko@mail.com)
@@ -56,7 +57,50 @@ class StatisticsManagerImplSpec extends Specification {
 	class StatisticsWithoutGetter {
 
 		@Aggregated(AggregationType.AVERAGE)
-		private String field
+		private int field
+	}
+
+	@StatisticsEntry
+	class StatisticsKeyIsAggregated {
+
+		@StatisticsKey
+		@Aggregated(AggregationType.MIN)
+		String field
+	}
+
+	@StatisticsEntry
+	class UnsupportedSumAggregation {
+
+		@Aggregated(AggregationType.SUM)
+		String field
+	}
+
+	@StatisticsEntry
+	class UnsupportedMinAggregation {
+
+		@Aggregated(AggregationType.MIN)
+		String field
+	}
+
+	@StatisticsEntry
+	class UnsupportedMaxAggregation {
+
+		@Aggregated(AggregationType.MAX)
+		String field
+	}
+
+	@StatisticsEntry
+	class UnsupportedAverageAggregation {
+
+		@Aggregated(AggregationType.AVERAGE)
+		String field
+	}
+
+	@StatisticsEntry
+	class NoStatisticsKey {
+
+		@Aggregated(AggregationType.MIN)
+		String field
 	}
 
 	IStatisticsManager manager = Spy(StatisticsManagerImpl)
@@ -79,7 +123,7 @@ class StatisticsManagerImplSpec extends Specification {
 
 	def "check collector created"() {
 		when:
-		manager.updateStatistics(statistics, clazz, statisticsName)
+		manager.updateStatistics(statistics, statisticsName)
 
 		then:
 		1 * manager.createCollector(clazz, statisticsName)
@@ -87,8 +131,8 @@ class StatisticsManagerImplSpec extends Specification {
 
 	def "check no collector duplications"() {
 		when:
-		def collector1 = manager.updateStatistics(statistics, clazz, statisticsName)
-		def collector2 = manager.updateStatistics(statistics, clazz, statisticsName)
+		def collector1 = manager.updateStatistics(statistics, statisticsName)
+		def collector2 = manager.updateStatistics(statistics, statisticsName)
 
 		then:
 		collector1.is(collector2)
@@ -155,5 +199,41 @@ class StatisticsManagerImplSpec extends Specification {
 
 		then:
 		0 * collector.collectStatistics(filter, false)
+	}
+
+	def "check validation failed if statisticskey is also marked as aggregated"() {
+		when:
+		manager.updateStatistics(new StatisticsKeyIsAggregated(), 'statistics name')
+
+		then:
+		thrown(IllegalStateException)
+	}
+
+	@Unroll
+	def "check unsupported field types in aggregation"(def clazz) {
+		setup:
+		def instance = clazz.newInstance()
+
+		when:
+		manager.updateStatistics(instance, 'name')
+
+		then:
+		thrown(IllegalStateException)
+
+		where:
+		clazz << [
+			UnsupportedAverageAggregation,
+			UnsupportedMaxAggregation,
+			UnsupportedMinAggregation,
+			UnsupportedSumAggregation
+		]
+	}
+
+	def "check statistics type marked invalid if it has no statisticskeys"() {
+		when:
+		manager.updateStatistics(new NoStatisticsKey(), 'name')
+
+		then:
+		thrown(IllegalStateException)
 	}
 }

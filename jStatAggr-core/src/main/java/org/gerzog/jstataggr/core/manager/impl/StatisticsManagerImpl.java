@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.gerzog.jstataggr.AggregationType;
 import org.gerzog.jstataggr.IStatisticsFilter;
 import org.gerzog.jstataggr.IStatisticsManager;
 import org.gerzog.jstataggr.annotations.Aggregated;
@@ -40,14 +41,24 @@ import org.gerzog.jstataggr.core.collector.impl.StatisticsCollector.StatisticsCo
  */
 public class StatisticsManagerImpl implements IStatisticsManager {
 
+	private static final Class<?>[] SUPPORTED_TYPES_FOR_MIN_AGGREGATION = { Long.class, long.class, Integer.class, int.class };
+
+	private static final Class<?>[] SUPPORTED_TYPES_FOR_MAX_AGGREGATION = { Long.class, long.class, Integer.class, int.class };
+
+	private static final Class<?>[] SUPPORTED_TYPES_FOR_SUM_AGGREGATION = { Long.class, long.class, Integer.class, int.class };
+
+	private static final Class<?>[] SUPPORTED_TYPES_FOR_COUNT_AGGREGATION = null;
+
+	private static final Class<?>[] SUPPORTED_TYPES_FOR_AVERAGE_AGGREGATION = { Long.class, long.class, Integer.class, int.class };
+
 	private final Map<String, StatisticsCollector> collectors = new ConcurrentHashMap<>();
 
 	@Override
-	public void updateStatistics(final Object statisticsEntry, final Class<?> statisticsClass, final String statisticsName) {
+	public void updateStatistics(final Object statisticsEntry, final String statisticsName) {
 		StatisticsCollector collector = collectors.get(statisticsName);
 
 		if (collector == null) {
-			collector = createCollector(statisticsClass, statisticsName);
+			collector = createCollector(statisticsEntry.getClass(), statisticsName);
 		}
 
 		collector.updateStatistics(statisticsEntry);
@@ -68,11 +79,16 @@ public class StatisticsManagerImpl implements IStatisticsManager {
 	protected void initializeCollector(final Class<?> statisticsClass, final StatisticsCollectorBuilder builder) {
 		for (final Field field : statisticsClass.getDeclaredFields()) {
 			if (field.isAnnotationPresent(StatisticsKey.class)) {
+				validateStatisticsKeyField(field);
+
 				appendStatisticsKeys(builder, statisticsClass, field);
 			}
 
 			if (field.isAnnotationPresent(Aggregated.class)) {
 				final Aggregated annotation = field.getAnnotation(Aggregated.class);
+
+				validateAggregationField(field, annotation);
+
 				appendAggregation(builder, statisticsClass, field, annotation);
 			}
 		}
@@ -113,5 +129,54 @@ public class StatisticsManagerImpl implements IStatisticsManager {
 
 	protected Map<String, StatisticsCollector> getCollectors() {
 		return collectors;
+	}
+
+	protected void validateStatisticsKeyField(final Field field) {
+		if (field.isAnnotationPresent(Aggregated.class)) {
+			throw new IllegalStateException("StatisticsKey field <" + field.getName() + "> cannot be marked as @Aggregated");
+		}
+	}
+
+	protected void validateAggregationField(final Field field, final Aggregated annotation) {
+		for (final AggregationType type : annotation.value()) {
+			Class<?>[] supportedTypes = null;
+
+			switch (type) {
+			case AVERAGE:
+				supportedTypes = SUPPORTED_TYPES_FOR_AVERAGE_AGGREGATION;
+				break;
+			case COUNT:
+				supportedTypes = SUPPORTED_TYPES_FOR_COUNT_AGGREGATION;
+				break;
+			case MAX:
+				supportedTypes = SUPPORTED_TYPES_FOR_MAX_AGGREGATION;
+				break;
+			case MIN:
+				supportedTypes = SUPPORTED_TYPES_FOR_MIN_AGGREGATION;
+				break;
+			case SUM:
+				supportedTypes = SUPPORTED_TYPES_FOR_SUM_AGGREGATION;
+				break;
+			default:
+				throw new IllegalArgumentException("AggregationType <" + type + "> is not supported");
+			}
+
+			boolean valid = false;
+
+			if (supportedTypes != null) {
+				for (final Class<?> supported : supportedTypes) {
+					if (field.getType().isAssignableFrom(supported)) {
+						valid = true;
+						break;
+					}
+				}
+			} else {
+				valid = true;
+			}
+
+			if (!valid) {
+				throw new IllegalStateException("Field <" + field.getName() + "> is of unsupported type <" + field.getType().getSimpleName() + "> for aggregation <" + type + ">");
+			}
+		}
 	}
 }

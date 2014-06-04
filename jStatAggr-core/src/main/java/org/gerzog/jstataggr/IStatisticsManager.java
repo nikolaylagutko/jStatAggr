@@ -24,7 +24,7 @@ import java.util.Map;
  */
 public interface IStatisticsManager {
 
-	void updateStatistics(Object statisticsEntry, Class<?> statisticsClass, String statisticsName);
+	void updateStatistics(Object statisticsEntry, String statisticsName);
 
 	Map<String, Collection<Object>> collectStatistics(String statisticsName, IStatisticsFilter filter, boolean cleanup);
 

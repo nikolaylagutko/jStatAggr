@@ -82,7 +82,7 @@ class AbstractStatisticsHandlerSpec extends Specification {
 
 		then:
 		1 * handler.handleStatistics(_ as Runnable)
-		1 * manager.updateStatistics(entry, Annotated, 'Annotated')
+		1 * manager.updateStatistics(entry, 'Annotated')
 	}
 
 	def "check statistics handling continues with defined name after successfull validation"() {
@@ -94,7 +94,7 @@ class AbstractStatisticsHandlerSpec extends Specification {
 
 		then:
 		1 * handler.handleStatistics(_ as Runnable)
-		1 * manager.updateStatistics(entry, AnnotatedWithName, 'cool name')
+		1 * manager.updateStatistics(entry, 'cool name')
 	}
 
 	def "check an exception thrown when statistcs manager is null"() {

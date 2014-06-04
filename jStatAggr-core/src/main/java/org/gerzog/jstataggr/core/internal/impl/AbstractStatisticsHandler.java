@@ -66,13 +66,13 @@ public abstract class AbstractStatisticsHandler implements IStatisticsHandler {
 
 		isTrue(annotation != null, NO_ANNOTATION_MESSAGE, className);
 
-		handleStatistics(() -> updateStatistics(statisticsEntry, clazz, getStatisticsName(annotation, className)));
+		handleStatistics(() -> updateStatistics(statisticsEntry, getStatisticsName(annotation, className)));
 	}
 
-	private void updateStatistics(final Object statisticsEntry, final Class<?> statisticsClass, final String statisticsName) {
+	private void updateStatistics(final Object statisticsEntry, final String statisticsName) {
 		notNull(manager, "Statistics Manager cannot be null");
 
-		manager.updateStatistics(statisticsEntry, statisticsClass, statisticsName);
+		manager.updateStatistics(statisticsEntry, statisticsName);
 	}
 
 	private String getStatisticsName(final StatisticsEntry entry, final String className) {
