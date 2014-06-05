@@ -34,6 +34,13 @@ class AggregationStatisticsField extends AbstractStatisticsField {
 
 	private final AggregationType aggregationType;
 
+	protected AggregationStatisticsField(final String modifier, final String fieldName, final Class<?> dataType, final Class<?> updaterType, final AggregationType aggregationType) {
+		super(modifier, fieldName, dataType);
+
+		this.updaterType = updaterType;
+		this.aggregationType = aggregationType;
+	}
+
 	protected AggregationStatisticsField(final String fieldName, final Class<?> dataType, final Class<?> updaterType, final AggregationType aggregationType) {
 		super(fieldName, dataType);
 
@@ -45,6 +52,10 @@ class AggregationStatisticsField extends AbstractStatisticsField {
 		this(fieldName, dataType, dataType, aggregationType);
 	}
 
+	public AggregationStatisticsField(final String modifier, final String fieldName, final Class<?> dataType, final AggregationType aggregationType) {
+		this(modifier, fieldName, dataType, dataType, aggregationType);
+	}
+
 	@Override
 	public void generate(final CtClass clazz) throws Exception {
 		super.generate(clazz);
@@ -52,19 +63,21 @@ class AggregationStatisticsField extends AbstractStatisticsField {
 		generateUpdater(clazz);
 	}
 
-	protected void generateUpdater(final CtClass clazz) throws Exception {
+	protected CtMethod generateUpdater(final CtClass clazz) throws Exception {
 		final CtMethod method = CtMethod.make(getUpdaterText(), clazz);
 
 		clazz.addMethod(method);
+
+		return method;
 	}
 
 	protected String getUpdaterText() {
-		return TemplateHelper.simpleUpdater(generateFieldName(), updaterType, aggregationType);
+		return TemplateHelper.simpleUpdater(getModifier(), getFieldName(), updaterType, aggregationType);
 	}
 
 	@Override
 	protected String generateFieldName() {
-		return FieldUtils.getAggregationFieldName(generateFieldName(), aggregationType);
+		return FieldUtils.getAggregationFieldName(super.generateFieldName(), aggregationType);
 	}
 
 	@Override
@@ -74,11 +87,16 @@ class AggregationStatisticsField extends AbstractStatisticsField {
 
 	@Override
 	protected String getAccessMethodName() {
-		return FieldUtils.getUpdaterName(generateFieldName(), aggregationType);
+		return FieldUtils.getUpdaterName(getFieldName(), aggregationType);
 	}
 
 	@Override
 	protected Class<?> getAccessMethodType() {
 		return updaterType;
+	}
+
+	@Override
+	public boolean isAggregator() {
+		return true;
 	}
 }

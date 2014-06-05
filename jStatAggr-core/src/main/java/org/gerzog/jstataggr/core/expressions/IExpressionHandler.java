@@ -13,19 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gerzog.jstataggr;
-
-import java.util.Collection;
-import java.util.Map;
+package org.gerzog.jstataggr.core.expressions;
 
 /**
  * @author Nikolay Lagutko (nikolay.lagutko@mail.com)
  *
  */
-public interface IStatisticsManager {
+public interface IExpressionHandler {
 
-	void updateStatistics(Object statisticsEntry, String statisticsName);
-
-	Map<String, Collection<Object>> collectStatistics(String statisticsName, IStatisticsFilter filter, boolean cleanup);
+	<T> T invokeExpression(String expressions, T originalValue) throws Exception;
 
 }

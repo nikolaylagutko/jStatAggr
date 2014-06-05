@@ -15,12 +15,12 @@
  */
 package org.gerzog.jstataggr.core.manager.impl.internal;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import javassist.CtClass;
+import javassist.CtMethod;
 
 import org.gerzog.jstataggr.AggregationType;
+import org.gerzog.jstataggr.core.templates.TemplateHelper;
+import org.gerzog.jstataggr.core.utils.FieldUtils;
 
 /**
  * @author Nikolay Lagutko (nikolay.lagutko@mail.com)
@@ -28,21 +28,35 @@ import org.gerzog.jstataggr.AggregationType;
  */
 class AverageAggregationStatisticsField extends AggregationStatisticsField {
 
-	private final List<IStatisticsField> dependent = new ArrayList<>();
+	private final AbstractStatisticsField countField;
 
 	public AverageAggregationStatisticsField(final String fieldName, final Class<?> dataType, final AggregationType aggregationType) {
-		super(fieldName, long.class, dataType, aggregationType);
+		super(fieldName, dataType, aggregationType);
 
-		dependent.add(new AggregationStatisticsField(generateFieldName(), getDataType(), AggregationType.SUM));
-		dependent.add(new AggregationStatisticsField(generateFieldName(), getDataType(), AggregationType.COUNT));
+		countField = new AggregationStatisticsField("protected", generateFieldName(), getDataType(), AggregationType.COUNT);
 	}
 
 	@Override
 	public void generate(final CtClass clazz) throws Exception {
-		for (final IStatisticsField subField : dependent) {
-			subField.generate(clazz);
-		}
+		countField.generate(clazz);
 
 		super.generate(clazz);
+	}
+
+	@Override
+	protected CtMethod generateUpdater(final CtClass clazz) throws Exception {
+		final CtMethod updater = super.generateUpdater(clazz);
+
+		final String methodName = FieldUtils.getUpdaterName(countField.getFieldName(), AggregationType.COUNT);
+		final String paramName = generateFieldName();
+
+		updater.insertAfter(TemplateHelper.methodCall(methodName, paramName));
+
+		return updater;
+	}
+
+	@Override
+	protected String getUpdaterText() {
+		return TemplateHelper.averageUpdater(getModifier(), getFieldName(), getDataType());
 	}
 }

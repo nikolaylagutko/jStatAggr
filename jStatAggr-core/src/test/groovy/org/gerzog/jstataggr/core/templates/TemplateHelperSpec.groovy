@@ -28,7 +28,7 @@ class TemplateHelperSpec extends Specification {
 
 	def "check getter method"() {
 		when:
-		def result = TemplateHelper.getter("value", Integer.class)
+		def result = TemplateHelper.getter('public', "value", Integer.class)
 
 		then:
 		result == 'public java.lang.Integer getValue() {return this.value;}'
@@ -36,7 +36,7 @@ class TemplateHelperSpec extends Specification {
 
 	def "check method creation"() {
 		when:
-		def result = TemplateHelper.method('value', 'java.lang.Integer', '', 'java.lang.String', 'param1', 'spock.lang.Specification', 'param2')
+		def result = TemplateHelper.method('public', 'value', 'java.lang.Integer', '', 'java.lang.String', 'param1', 'spock.lang.Specification', 'param2')
 
 		then:
 		result == 'public java.lang.Integer value(java.lang.String param1, spock.lang.Specification param2) {}'
@@ -52,7 +52,7 @@ class TemplateHelperSpec extends Specification {
 
 	def "check setter method"() {
 		when:
-		def result = TemplateHelper.setter('value', Integer.class)
+		def result = TemplateHelper.setter('public', 'value', Integer.class)
 
 		then:
 		result == 'public void setValue(java.lang.Integer value) {this.value = value;}'
@@ -98,7 +98,7 @@ class TemplateHelperSpec extends Specification {
 	@Unroll
 	def "check updater method"(AggregationType aggregation, String postfix) {
 		when:
-		def result = TemplateHelper.simpleUpdater('value', int.class, aggregation)
+		def result = TemplateHelper.simpleUpdater('public', 'value', int.class, aggregation)
 
 		then:
 		result.startsWith("public void updateValue${postfix}(int value)")
@@ -134,5 +134,21 @@ class TemplateHelperSpec extends Specification {
 
 		then:
 		result == 'return this.valueSum / this.valueCount;'
+	}
+
+	def "check method call generator"() {
+		when:
+		def result = TemplateHelper.methodCall('method', 'param1', 'param2')
+
+		then:
+		result == 'method(param1, param2);'
+	}
+
+	def "check average updater method"() {
+		when:
+		def result = TemplateHelper.averageUpdaterBody('averageField')
+
+		then:
+		result == 'this.averageField = org.gerzog.jstataggr.core.functions.FunctionHelper.apply(averageField, averageFieldCount, this.averageField);'
 	}
 }

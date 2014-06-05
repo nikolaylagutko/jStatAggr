@@ -22,10 +22,11 @@ subprojects {
 	}	
 	
 	dependencies {
-		testCompile group: 'junit',					name: 'junit-dep',			version: junitVersion
-		testCompile group: 'org.codehaus.groovy',	name: 'groovy-all',			version: groovyVersion
-		testCompile group: 'org.spockframework',	name: 'spock-core',			version: spockVersion
-		testCompile group: 'cglib',					name: 'cglib-nodep',		version: cglibVersion
+		testCompile group: 'junit',					name: 'junit-dep',		version: junitVersion
+		testCompile group: 'org.codehaus.groovy',	name: 'groovy-all',		version: groovyVersion
+		testCompile group: 'org.spockframework',	name: 'spock-core',		version: spockVersion
+		testCompile group: 'cglib',					name: 'cglib-nodep',	version: cglibVersion
+		testCompile group: 'org.objenesis',			name: 'objenesis',		version: objenesisVersion		
 	}
 	
 	license {

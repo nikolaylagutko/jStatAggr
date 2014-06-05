@@ -1,1 +1,5 @@
-include 'jStatAggr-core', 'jStatAggr-csv', 'jStatAggr-sample'
+include 'jStatAggr-core', 
+		'jStatAggr-csv', 
+		'jStatAggr-sample',  
+		'jStatAggr-spel', 
+		'jStatAggr-juel'

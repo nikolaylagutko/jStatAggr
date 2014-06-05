@@ -27,6 +27,10 @@ public interface IStatisticsField {
 
 	void generate(CtClass clazz) throws Exception;
 
-	MethodHandle getAccessMethod(Class<?> clazz) throws Exception;
+	MethodHandle getAccessMethodHandle(Class<?> clazz) throws Exception;
+
+	boolean isAggregator();
+
+	String getFieldName();
 
 }

@@ -51,10 +51,10 @@ abstract class AbstractSampleSpec extends Specification {
 			assert data.size() == 6
 
 			data.each {
-				assert it.valueMax == 9
+				assert it.valueMax == 900
 				assert it.valueMin == 0
-				assert it.valueSum == [0..9].sum().sum()
-				assert it.getValueAverage() == 4
+				assert it.valueSum == [0..9].sum().sum() * 100
+				assert it.getValueAverage() == 450
 			}
 		}
 	}
@@ -144,7 +144,7 @@ abstract class AbstractSampleSpec extends Specification {
 					StatisticsOne statistics = new StatisticsOne()
 					statistics.key = key1.toString()
 					statistics.anotherKey = key2.toString()
-					statistics.value = it
+					statistics.value = it * 100
 
 					result << statistics
 				}

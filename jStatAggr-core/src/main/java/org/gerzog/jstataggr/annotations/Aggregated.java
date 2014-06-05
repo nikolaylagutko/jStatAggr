@@ -38,6 +38,6 @@ public @interface Aggregated {
 	/**
 	 * Aggregation types affected for annotated field
 	 */
-	public AggregationType[] value() default {};
+	public AggregationType[] value();
 
 }

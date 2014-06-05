@@ -143,4 +143,18 @@ class FunctionHelperSpec extends Specification {
 			AggregationType.SUM
 		]
 	}
+
+	@Unroll
+	def "check applyAverage"(def update, def currentCount, def currentAverage, def expectedResult) {
+		when:
+		def result = FunctionHelper.apply(update, currentCount, currentAverage)
+
+		then:
+		result == expectedResult
+
+		where:
+		update	| currentCount	| currentAverage	| expectedResult
+		21		| 10			| 10				| 11
+		21l		| 10l			| 10l				| 11l
+	}
 }

@@ -29,12 +29,17 @@ class StatisticsField extends AbstractStatisticsField {
 
 	@Override
 	protected String getAccessMethodName() {
-		return FieldUtils.getGetterName(generateFieldName(), getDataType());
+		return FieldUtils.getSetterName(generateFieldName());
 	}
 
 	@Override
 	protected Class<?> getAccessMethodType() {
 		return getDataType();
+	}
+
+	@Override
+	public boolean isAggregator() {
+		return false;
 	}
 
 }

@@ -13,19 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gerzog.jstataggr;
+package org.gerzog.jstataggr.annotations;
 
-import java.util.Collection;
-import java.util.Map;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
  * @author Nikolay Lagutko (nikolay.lagutko@mail.com)
  *
  */
-public interface IStatisticsManager {
+@Target(ElementType.FIELD)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface Expression {
 
-	void updateStatistics(Object statisticsEntry, String statisticsName);
-
-	Map<String, Collection<Object>> collectStatistics(String statisticsName, IStatisticsFilter filter, boolean cleanup);
+	String value();
 
 }
