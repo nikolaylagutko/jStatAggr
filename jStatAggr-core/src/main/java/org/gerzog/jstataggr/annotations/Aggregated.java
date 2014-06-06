@@ -22,6 +22,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import org.gerzog.jstataggr.AggregationType;
+import org.gerzog.jstataggr.FieldType;
 
 /**
  * Mark field of a class as Aggregated.
@@ -39,5 +40,7 @@ public @interface Aggregated {
 	 * Aggregation types affected for annotated field
 	 */
 	public AggregationType[] value();
+
+	public FieldType fieldType() default FieldType.ACCUMULATOR;
 
 }

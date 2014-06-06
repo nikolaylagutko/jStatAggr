@@ -21,6 +21,6 @@ package org.gerzog.jstataggr.core.expressions;
  */
 public interface IExpressionHandler {
 
-	<T> T invokeExpression(String expressions, T originalValue) throws Exception;
+	<T> T invokeExpression(String expression, T originalValue) throws Exception;
 
 }
