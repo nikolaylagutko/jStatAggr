@@ -16,30 +16,56 @@
 package org.gerzog.jstataggr.expressions.spel
 
 import org.gerzog.jstataggr.core.expressions.IExpressionHandler
+import org.gerzog.jstataggr.expressions.config.TestContext
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.test.context.ContextConfiguration
 
-import spock.lang.Ignore
 import spock.lang.Specification
+import spock.lang.Unroll
 
 /**
  * @author Nikolay Lagutko (nikolay.lagutko@mail.com)
  *
  */
-@Ignore
 @ContextConfiguration(classes = [TestContext.class])
 class SpelExpressionHandlerSpec extends Specification {
 
 	@Autowired
-	@Qualifier('expressionHandler')
 	IExpressionHandler handler
 
-	def "hallo"() {
+	@Unroll
+	def "check expression handling"(def expression, def value, def expected) {
 		when:
-		1 + 1
+		def result = handler.invokeExpression(expression, value)
 
 		then:
-		true
+		result == expected
+
+		where:
+		expression 				| value | expected
+		'1 + 1'					| 10	| 2
+		'#this + 5'				| 10	| 15
+		'#this + @bean.value'	| 10	| 20
+	}
+
+	def "check an error occured when value is null"() {
+		when:
+		handler.invokeExpression('1 + 1', null)
+
+		then:
+		thrown(NullPointerException)
+	}
+
+	def "check an error occured when expression is null or empty"(def expression, def exception) {
+		when:
+		handler.invokeExpression(expression, 10)
+
+		then:
+		thrown(exception)
+
+		where:
+		expression | exception
+		null	   | NullPointerException
+		''		   | IllegalArgumentException
 	}
 }

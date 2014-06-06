@@ -15,14 +15,19 @@
  */
 package org.gerzog.jstataggr.expressions.spel;
 
+import static org.apache.commons.lang3.Validate.notEmpty;
 import static org.apache.commons.lang3.Validate.notNull;
 
 import javax.annotation.PostConstruct;
 
 import org.gerzog.jstataggr.core.expressions.IExpressionHandler;
 import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.expression.BeanFactoryResolver;
 import org.springframework.expression.EvaluationContext;
+import org.springframework.expression.Expression;
+import org.springframework.expression.ExpressionParser;
+import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
 
 /**
@@ -31,28 +36,38 @@ import org.springframework.expression.spel.support.StandardEvaluationContext;
  */
 public class SpelExpressionHandler implements IExpressionHandler {
 
+	@Autowired
 	private BeanFactory beanFactory;
 
 	private EvaluationContext context;
+
+	private ExpressionParser expressionParser;
 
 	public void setBeanFactory(final BeanFactory beanFactory) {
 		this.beanFactory = beanFactory;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public <T> T invokeExpression(final String expressions,
-			final T originalValue) throws Exception {
-		// TODO Auto-generated method stub
-		return null;
+	public <T> T invokeExpression(final String expression, final T originalValue)
+			throws Exception {
+		notNull(originalValue, "Context value cannot be null");
+		notEmpty(expression, "Expression cannot be null or empty");
+
+		final Expression parsedExpression = expressionParser
+				.parseExpression(expression);
+
+		return (T) parsedExpression.getValue(context, originalValue,
+				originalValue.getClass());
 	}
 
 	@PostConstruct
 	public void initialize() {
-		notNull(beanFactory, "Cannot initialize SpEL without BeanFactory");
 
 		final StandardEvaluationContext context = new StandardEvaluationContext();
 		context.setBeanResolver(new BeanFactoryResolver(beanFactory));
 
 		this.context = context;
+		this.expressionParser = new SpelExpressionParser();
 	}
 }
