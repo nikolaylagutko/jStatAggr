@@ -15,8 +15,14 @@
  */
 package org.gerzog.jstataggr.core.templates;
 
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.LongAccumulator;
+import java.util.concurrent.atomic.LongAdder;
+
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.reflect.TypeUtils;
 import org.gerzog.jstataggr.AggregationType;
 import org.gerzog.jstataggr.core.functions.FunctionHelper;
 import org.gerzog.jstataggr.core.utils.FieldUtils;
@@ -40,7 +46,23 @@ public final class TemplateHelper {
 	}
 
 	public static String getter(final String modifier, final String name, final Class<?> type) {
-		return method(modifier, FieldUtils.getGetterName(name, type), getTypeName(type), getterBody(name));
+		return method(modifier, FieldUtils.getGetterName(name, type), getTypeName(type), getterBody(fieldAccessLine(name, type)));
+	}
+
+	protected static String fieldAccessLine(final String field, final Class<?> type) {
+		return field + getPostfix(type);
+	}
+
+	private static String getPostfix(final Class<?> type) {
+		String postfix = StringUtils.EMPTY;
+
+		if (TypeUtils.isAssignable(type, AtomicLong.class) || TypeUtils.isAssignable(type, AtomicInteger.class) || TypeUtils.isAssignable(type, LongAccumulator.class)) {
+			postfix = ".get()";
+		} else if (TypeUtils.isAssignable(type, LongAdder.class)) {
+			postfix = ".sum()";
+		}
+
+		return postfix;
 	}
 
 	protected static String getterBody(final String name) {

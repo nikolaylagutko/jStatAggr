@@ -15,6 +15,10 @@
  */
 package org.gerzog.jstataggr.core.templates
 
+import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.atomic.LongAccumulator
+import java.util.concurrent.atomic.LongAdder
+
 import org.gerzog.jstataggr.AggregationType
 
 import spock.lang.Specification
@@ -150,5 +154,20 @@ class TemplateHelperSpec extends Specification {
 
 		then:
 		result == 'this.averageField = org.gerzog.jstataggr.core.functions.FunctionHelper.apply(averageField, averageFieldCount, this.averageField);'
+	}
+
+	def "check field access lines"(def clazz, def expected) {
+		when:
+		def result = TemplateHelper.fieldAccessLine('field', clazz)
+
+		then:
+		result == expected
+
+		where:
+		clazz 					| expected
+		int.class 				| 'field'
+		AtomicLong.class 		| 'field.get()'
+		LongAdder.class			| 'field.sum()'
+		LongAccumulator.class 	| 'field.get()'
 	}
 }
