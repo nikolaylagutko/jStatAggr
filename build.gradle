@@ -54,6 +54,8 @@ subprojects {
 release {
 	scm = 'git'
 	allowLocalModifications = true
+	username = System.env.GIT_USERNAME
+	password = System.env.GIT_PASSWORD
 }
 
 task wrapper(type: Wrapper) {

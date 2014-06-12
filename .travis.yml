@@ -1,6 +1,8 @@
 language: java
 jdk: oraclejdk8
-script: ./gradlew clean build
+script: "./gradlew clean build"
 env:
   global:
-    secure: T/qYVxAu2erMV9TjGgiWrgJMEAe7zKRkeVcPZpPdzDvPhhyhPK1MENuIjKy8iULyDyATNXOdW32ZIK+QSNaT892EtLLiQNdhGD7k1+ezpFQ3Ln6oASEr3bzpqREAWuPfro7OiiXIC/gHaXouRPrHchI/a4yqdNLFYYjxV1aejn8=
+  - secure: T/qYVxAu2erMV9TjGgiWrgJMEAe7zKRkeVcPZpPdzDvPhhyhPK1MENuIjKy8iULyDyATNXOdW32ZIK+QSNaT892EtLLiQNdhGD7k1+ezpFQ3Ln6oASEr3bzpqREAWuPfro7OiiXIC/gHaXouRPrHchI/a4yqdNLFYYjxV1aejn8=
+  - secure: cTBkmclnal0BcPefAzGb84tIXzwDTIrHz6OlQRAJn1hpfVSyKCWqblP40e7zxTbk9A4luBRPKs8My9U3K7d5pfFC+ilp1zLGHUJW9Vh/ECCg95ILc+FJTCJabHJkIwYYUiw9AgkKswy/7q8taYm+XeTAKH7/H5qPVYCbnlP48dM=
+  - secure: EIWlQM8Z8k1/VD8C9B+lB9bvlc4OqSJtVe5oakERBeQmaBd2hglA01XYbftVGCQu4WzFfNoECLTbIDBfq96dLaO6+4fepmqFfC0IAyWvnWmCepCbpHvcMJ8QUhRbE3o+qYPCiASy1BZzhEcHPFhNzHdB0uqTW6o3zmUP5UqfC7o=

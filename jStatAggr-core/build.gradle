@@ -48,7 +48,7 @@ publishing {
 
 bintray {
 	user = 'nikolaylagutko'
-	key = 'ec5e537d1266d6c3a771ec890a1d3ba1a31d0ff8'
+	key = System.env.BINTRAY_API_KEY
 	
 	publications = ['mavenJava']
 	
