@@ -6,6 +6,9 @@ buildscript {
 	
 	dependencies {
 		classpath group: 'nl.javadude.gradle.plugins',	name: 'license-gradle-plugin',	version: gradleLicenseVersion
+		classpath group: 'au.com.ish.gradle',			name: 'release',				version: gradleReleaseVersion, {
+			exclude module: 'svnkit'
+		}
 		classpath group: 'com.jfrog.bintray.gradle',	name: 'gradle-bintray-plugin',	version: gradleBintrayVersion
 	}
 }
@@ -44,6 +47,10 @@ subprojects {
 		from sourceSets.main.allSource
 		classifier = 'sources'
 	}
+}
+
+release {
+	scm = 'git'
 }
 
 task wrapper(type: Wrapper) {
