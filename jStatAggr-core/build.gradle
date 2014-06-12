@@ -1,6 +1,65 @@
+apply plugin: 'bintray'
+apply plugin: 'maven-publish'
+
 dependencies {
 	compile group: 'org.apache.commons',	name: 'commons-lang3',			version: commonsLangVersion
 	compile group: 'org.javassist',			name: 'javassist',				version: javassistVersion
 	compile group: 'cglib',					name: 'cglib-nodep',			version: cglibVersion
 	compile group: 'org.apache.commons',	name: 'commons-collections4',	version: commonsCollectionsVersion
+}
+
+def pomConfig = {
+	licenses {
+		license {
+			name 'The Apache Software License, Version 2.0'
+			url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+			distribution 'repo'
+		}
+	}
+	developers {
+		developer {
+			id 'nikolaylagutko'
+			name 'Nikolay Lagutko'
+			email 'NikolayLagutko@mail.com'
+		}
+	}
+}
+
+publishing {
+	publications {
+		mavenJava(MavenPublication) {
+			artifactId 'core'
+			
+			from components.java
+			artifact sourcesJar
+			artifact javadocJar
+			
+			pom.withXml {
+				def root = asNode()
+				
+				root.appendNode('description', 'Java library to simplify Statistics Aggregation')
+				root.children().last() + pomConfig
+			}	
+		}
+	}
+}
+
+bintray {
+	user = 'nikolaylagutko'
+	key = 'ec5e537d1266d6c3a771ec890a1d3ba1a31d0ff8'
+	
+	publications = ['mavenJava']
+	
+	pkg {
+		repo = 'statistics-aggregator'
+		name = 'jStatAggr'
+		desc = 'Statistics Aggregator'
+		licenses = ['Apache-2.0']
+	}
+	
+	dryRun = true
+}
+
+task install(dependsOn: 'publishMavenJavaPublicationToMavenLocal') << {
+    logger.info "Installing $project.name"
 }
