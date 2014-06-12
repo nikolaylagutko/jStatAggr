@@ -1,6 +1,7 @@
 buildscript {
 	repositories {
 		mavenCentral() 
+		jcenter()
 	}
 	
 	dependencies {
@@ -8,6 +9,7 @@ buildscript {
 		classpath group: 'au.com.ish.gradle',			name: 'release',				version: gradleReleaseVersion, {
 			exclude module: 'svnkit'
 		}
+		classpath group: 'com.jfrog.bintray.gradle',	name: 'gradle-bintray-plugin',	version: gradleBintrayVersion
 	}
 }
 
@@ -36,6 +38,16 @@ subprojects {
 	
 	license {
 		header rootProject.file("HEADER")
+	}
+	
+	task javadocJar(type: Jar, dependsOn: javadoc) {
+		classifier = 'javadoc'
+		from 'build/docs/javadoc'
+	}
+	
+	task sourcesJar(type: Jar) {
+		from sourceSets.main.allSource
+		classifier = 'sources'
 	}
 }
 
