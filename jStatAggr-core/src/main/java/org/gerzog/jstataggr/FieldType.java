@@ -20,6 +20,6 @@ package org.gerzog.jstataggr;
  *
  */
 public enum FieldType {
-	PRIMITIVE, ATOMIC, ACCUMULATOR;
+	PRIMITIVE, ATOMIC;
 
 }

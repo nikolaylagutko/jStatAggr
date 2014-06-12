@@ -51,9 +51,6 @@ class StatisticsManagerImplSpec extends Specification {
 		@Aggregated([AggregationType.MIN, AggregationType.SUM, AggregationType.COUNT, AggregationType.AVERAGE])
 		int value
 
-		@Aggregated(value = [AggregationType.COUNT], fieldType = FieldType.ACCUMULATOR)
-		int value2
-
 		@Aggregated(value = [AggregationType.SUM, AggregationType.AVERAGE], fieldType = FieldType.PRIMITIVE)
 		int value3
 
@@ -176,7 +173,6 @@ class StatisticsManagerImplSpec extends Specification {
 		setup:
 		def nameField = Statistics.getDeclaredField('name')
 		def valueField = Statistics.getDeclaredField('value')
-		def value2Field = Statistics.getDeclaredField('value2')
 		def value3Field = Statistics.getDeclaredField('value3')
 		def expressionField = Statistics.getDeclaredField('expression')
 
@@ -193,8 +189,6 @@ class StatisticsManagerImplSpec extends Specification {
 			AggregationType.AVERAGE
 		], FieldType.ATOMIC, _ as MethodHandle, null)
 		1 * builder.addStatisticsKey(expressionField, _ as MethodHandle, '2 + 3')
-
-		1 * builder.addAggregation(value2Field, [AggregationType.COUNT], FieldType.ACCUMULATOR, _ as MethodHandle, null)
 
 		1 * builder.addAggregation(value3Field, [
 			AggregationType.SUM,

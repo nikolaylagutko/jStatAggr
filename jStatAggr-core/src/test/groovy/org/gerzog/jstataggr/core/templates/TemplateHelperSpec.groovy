@@ -17,8 +17,6 @@ package org.gerzog.jstataggr.core.templates
 
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
-import java.util.concurrent.atomic.LongAccumulator
-import java.util.concurrent.atomic.LongAdder
 
 import org.gerzog.jstataggr.AggregationType
 
@@ -191,7 +189,5 @@ class TemplateHelperSpec extends Specification {
 		clazz 					| expected
 		int.class 				| 'field'
 		AtomicLong.class 		| 'field.get()'
-		LongAdder.class			| 'field.sum()'
-		LongAccumulator.class 	| 'field.get()'
 	}
 }

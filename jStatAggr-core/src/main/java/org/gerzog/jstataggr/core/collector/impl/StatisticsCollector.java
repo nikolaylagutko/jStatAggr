@@ -15,8 +15,6 @@
  */
 package org.gerzog.jstataggr.core.collector.impl;
 
-import static org.gerzog.jstataggr.core.utils.Throwables.propogate;
-
 import java.lang.invoke.MethodHandle;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -24,6 +22,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javassist.ClassPool;
@@ -61,8 +60,7 @@ public class StatisticsCollector {
 
 		private MethodHandle accessor;
 
-		public FieldInfo(final String name, final String expression,
-				final MethodHandle getter) {
+		public FieldInfo(final String name, final String expression, final MethodHandle getter) {
 			this.name = name;
 			this.expression = expression;
 			this.getter = getter;
@@ -97,41 +95,27 @@ public class StatisticsCollector {
 
 		private final Map<IStatisticsField, FieldInfo> statisticsFieldInfo = new HashMap<>();
 
-		public StatisticsCollectorBuilder(final String className,
-				final IExpressionHandler expressionHandler) {
+		public StatisticsCollectorBuilder(final String className, final IExpressionHandler expressionHandler) {
 			this.result = new StatisticsCollector(expressionHandler);
 			this.className = className;
 		}
 
-		public StatisticsCollectorBuilder addStatisticsKey(final Field field,
-				final MethodHandle getter, final String expression) {
+		public StatisticsCollectorBuilder addStatisticsKey(final Field field, final MethodHandle getter, final String expression) {
 
-			add(field.getName(),
-					expression,
-					StatisticsFields.forStatisticsKey(field.getName(),
-							field.getType()), getter);
+			add(field.getName(), expression, StatisticsFields.forStatisticsKey(field.getName(), field.getType()), getter);
 
 			return this;
 		}
 
-		public StatisticsCollectorBuilder addAggregation(final Field field,
-				final AggregationType[] aggregationTypes,
-				final FieldType fieldType, final MethodHandle getter,
-				final String expression) {
+		public StatisticsCollectorBuilder addAggregation(final Field field, final AggregationType[] aggregationTypes, final FieldType fieldType, final MethodHandle getter, final String expression) {
 			for (final AggregationType type : aggregationTypes) {
-				add(field.getName(),
-						expression,
-						StatisticsFields.forAggregation(field.getName(),
-								field.getType(), type, fieldType), getter);
+				add(field.getName(), expression, StatisticsFields.forAggregation(field.getName(), field.getType(), type, fieldType), getter);
 			}
 
 			return this;
 		}
 
-		private StatisticsCollectorBuilder add(final String name,
-				final String expression,
-				final IStatisticsField statisticsField,
-				final MethodHandle getter) {
+		private StatisticsCollectorBuilder add(final String name, final String expression, final IStatisticsField statisticsField, final MethodHandle getter) {
 			final FieldInfo fieldInfo = new FieldInfo(name, expression, getter);
 
 			statisticsFieldInfo.put(statisticsField, fieldInfo);
@@ -139,7 +123,7 @@ public class StatisticsCollector {
 			return this;
 		}
 
-		public StatisticsCollector build() {
+		public StatisticsCollector build() throws Throwable {
 			result.classInfo = generateClassInfo(className, statisticsFieldInfo);
 
 			return result;
@@ -184,8 +168,7 @@ public class StatisticsCollector {
 
 		public void setExternalEntityClass(final Class<?> externalEntityClass) {
 			this.externalEntityClass = externalEntityClass;
-			this.externalEntityConverter = BeanCopier.create(bucketClass,
-					externalEntityClass, false);
+			this.externalEntityConverter = BeanCopier.create(bucketClass, externalEntityClass, false);
 		}
 
 	}
@@ -196,7 +179,14 @@ public class StatisticsCollector {
 
 	private final IExpressionHandler expressionHandler;
 
-	private final Transformer<Object, Object> exportTransformer = (input) -> convert(input);
+	private final Transformer<Object, Object> exportTransformer = new Transformer<Object, Object>() {
+
+		@Override
+		public Object transform(final Object input) {
+			return convert(input);
+		}
+
+	};
 
 	// LN: 2.06.2014, made package-visible for tests
 	StatisticsCollector(final IExpressionHandler expressionHandler) {
@@ -204,86 +194,74 @@ public class StatisticsCollector {
 	}
 
 	private Object convert(final Object input) {
-		return propogate(() -> {
-			final Object externalEntity = classInfo.getExternalEntityClass()
-					.newInstance();
+		try {
+			final Object externalEntity = classInfo.getExternalEntityClass().newInstance();
 
-			classInfo.getExternalEntityConverter().copy(input, externalEntity,
-					null);
+			classInfo.getExternalEntityConverter().copy(input, externalEntity, null);
 
 			return externalEntity;
-		});
+		} catch (final Throwable e) {
+			throw new RuntimeException("Unable to convert statistics <" + input + "> to external entity", e);
+		}
 	}
 
-	protected static CollectorClassInfo generateClassInfo(
-			final String className,
-			final Map<IStatisticsField, FieldInfo> fieldInfo) {
+	protected static CollectorClassInfo generateClassInfo(final String className, final Map<IStatisticsField, FieldInfo> fieldInfo) throws Throwable {
 		final ClassPool pool = ClassPool.getDefault();
 
-		final CtClass clazz = pool.makeClass(PACKAGE_PREFIX
-				+ StringUtils.capitalize(className));
+		final CtClass clazz = pool.makeClass(PACKAGE_PREFIX + StringUtils.capitalize(className));
 
-		fieldInfo.keySet().forEach(info -> {
-			propogate(() -> info.generate(clazz));
-		});
+		for (final IStatisticsField info : fieldInfo.keySet()) {
+			info.generate(clazz);
+		}
 
-		return propogate(() -> {
-			return generateClassInfo(clazz.toClass(), fieldInfo);
-		});
+		return generateClassInfo(clazz.toClass(), fieldInfo);
 	}
 
-	protected static CollectorClassInfo generateClassInfo(final Class<?> clazz,
-			final Map<IStatisticsField, FieldInfo> fieldInfo) {
+	protected static CollectorClassInfo generateClassInfo(final Class<?> clazz, final Map<IStatisticsField, FieldInfo> fieldInfo) throws Throwable {
 		final CollectorClassInfo result = new CollectorClassInfo(clazz);
 		final Map<String, Class<?>> methodInfo = new HashMap<>();
 
-		fieldInfo.forEach((statisticsInfo, bucketInfo) -> {
-			propogate(() -> {
-				final MethodHandle accessMethod = statisticsInfo
-						.getAccessMethodHandle(clazz);
+		for (final Entry<IStatisticsField, FieldInfo> entry : fieldInfo.entrySet()) {
+			final IStatisticsField statisticsInfo = entry.getKey();
+			final FieldInfo bucketInfo = entry.getValue();
+			final MethodHandle accessMethod = statisticsInfo.getAccessMethodHandle(clazz);
 
-				bucketInfo.setAccessor(accessMethod);
+			bucketInfo.setAccessor(accessMethod);
 
-				if (statisticsInfo.isAggregator()) {
-					result.getUpdaters().add(bucketInfo);
-				} else {
-					result.getKeys().put(bucketInfo.getName(), bucketInfo);
-				}
+			if (statisticsInfo.isAggregator()) {
+				result.getUpdaters().add(bucketInfo);
+			} else {
+				result.getKeys().put(bucketInfo.getName(), bucketInfo);
+			}
 
-				methodInfo.put(statisticsInfo.getFieldName(),
-						statisticsInfo.getMethodType());
-			});
-		});
+			methodInfo.put(statisticsInfo.getFieldName(), statisticsInfo.getMethodType());
+		}
 
 		final BeanGenerator externalBeanGenerator = new BeanGenerator();
 		BeanGenerator.addProperties(externalBeanGenerator, methodInfo);
 
-		result.setExternalEntityClass((Class<?>) externalBeanGenerator
-				.createClass());
+		result.setExternalEntityClass((Class<?>) externalBeanGenerator.createClass());
 
 		return result;
 	}
 
-	public void updateStatistics(final Object statisticsData) {
+	public void updateStatistics(final Object statisticsData) throws Throwable {
 		final Object statisticsBucket = getStatisticsBucket(statisticsData);
 
 		updateStatistics(statisticsBucket, statisticsData);
 	}
 
-	protected void updateStatistics(final Object statisticsBucket,
-			final Object statisticsData) {
-		classInfo.getUpdaters().forEach(updater -> {
-			propogate(() -> {
-				Object value = updater.getGetter().invoke(statisticsData);
+	protected void updateStatistics(final Object statisticsBucket, final Object statisticsData) throws Throwable {
+		for (final FieldInfo updater : classInfo.getUpdaters()) {
+			Object value = updater.getGetter().invoke(statisticsData);
 
-				value = updateValue(value, updater.getExpression());
+			value = updateValue(value, updater.getExpression());
 
-				updater.getAccessor().invoke(statisticsBucket, value);
-			});
-		});
+			updater.getAccessor().invoke(statisticsBucket, value);
+		}
 	}
 
-	protected Object getStatisticsBucket(final Object statisticsData) {
+	protected Object getStatisticsBucket(final Object statisticsData) throws Throwable {
 		final IStatisticsKey key = generateStatisticsKey(statisticsData);
 
 		Object statisticsBucket = statistics.get(key);
@@ -295,67 +273,60 @@ public class StatisticsCollector {
 		return statisticsBucket;
 	}
 
-	protected IStatisticsKey generateStatisticsKey(final Object statisticsData) {
+	protected IStatisticsKey generateStatisticsKey(final Object statisticsData) throws Throwable {
 		final StatisticsKeyBuilder builder = new StatisticsKeyBuilder();
 
-		classInfo.getKeys().forEach((name, handles) -> {
-			propogate(() -> {
-				Object value = handles.getGetter().invoke(statisticsData);
+		for (final Entry<String, FieldInfo> entry : classInfo.getKeys().entrySet()) {
+			final String name = entry.getKey();
+			final FieldInfo handles = entry.getValue();
+			Object value = handles.getGetter().invoke(statisticsData);
 
-				value = updateValue(value, handles.getExpression());
+			value = updateValue(value, handles.getExpression());
 
-				builder.withParameter(name, value);
-			});
-		});
+			builder.withParameter(name, value);
+		}
 
 		return builder.build();
 	}
 
-	protected Object generateStatisticsBucket(final IStatisticsKey key,
-			final Object statisticsData) {
-		return propogate(() -> {
-			final Object result = classInfo.getBucketClass().newInstance();
+	protected Object generateStatisticsBucket(final IStatisticsKey key, final Object statisticsData) throws Throwable {
+		final Object result = classInfo.getBucketClass().newInstance();
 
-			classInfo.getKeys().forEach((name, handles) -> {
-				propogate(() -> {
-					Object value = key.get(name);
+		for (final Entry<String, FieldInfo> entry : classInfo.getKeys().entrySet()) {
+			final String name = entry.getKey();
+			final FieldInfo handles = entry.getValue();
 
-					value = updateValue(value, handles.getExpression());
+			Object value = key.get(name);
 
-					handles.getAccessor().invoke(result, value);
-				});
-			});
+			value = updateValue(value, handles.getExpression());
 
-			final Object existing = statistics.putIfAbsent(key, result);
+			handles.getAccessor().invoke(result, value);
+		}
 
-			return existing == null ? result : existing;
-		});
+		final Object existing = statistics.put(key, result);
+
+		return existing == null ? result : existing;
 	}
 
 	protected Map<IStatisticsKey, Object> getStatistics() {
 		return statistics;
 	}
 
-	public Collection<Object> collectStatistics(final IStatisticsFilter filter,
-			final boolean cleanup) {
+	public Collection<Object> collectStatistics(final IStatisticsFilter filter, final boolean cleanup) {
 		final Collection<Object> result = new ArrayList<>();
 
-		statistics.keySet().forEach(
-				key -> {
-					if (filter.isApplied(key)) {
-						final Object data = cleanup ? statistics.remove(key)
-								: statistics.get(key);
+		for (final IStatisticsKey key : statistics.keySet()) {
+			if (filter.isApplied(key)) {
+				final Object data = cleanup ? statistics.remove(key) : statistics.get(key);
 
-						result.add(data);
-					}
-				});
+				result.add(data);
+			}
+		}
 
-		return CollectionUtils
-				.transformingCollection(result, exportTransformer);
+		return CollectionUtils.transformingCollection(result, exportTransformer);
 	}
 
-	protected Object updateValue(final Object original, final String expression)
-			throws Exception {
+	protected Object updateValue(final Object original, final String expression) throws Exception {
 		if ((expressionHandler != null) && (expression != null)) {
 			return expressionHandler.invokeExpression(expression, original);
 		}

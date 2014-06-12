@@ -17,8 +17,6 @@ package org.gerzog.jstataggr.core.functions
 
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
-import java.util.concurrent.atomic.LongAccumulator
-import java.util.concurrent.atomic.LongAdder
 
 import org.gerzog.jstataggr.AggregationType
 
@@ -117,14 +115,6 @@ class FunctionHelperSpec extends Specification {
 		AggregationType.MAX		| 10l				| new Object()
 		AggregationType.MIN		| 10l				| new Object()
 		AggregationType.SUM		| 10l				| new Object()
-		AggregationType.AVERAGE | adder(10)			| new Object()
-		AggregationType.MAX		| adder(10)			| new Object()
-		AggregationType.MIN		| adder(10)			| new Object()
-		AggregationType.SUM		| adder(10)			| new Object()
-		AggregationType.AVERAGE | new AtomicLong()	| new Object()
-		AggregationType.MAX		| new AtomicLong()	| new Object()
-		AggregationType.MIN		| new AtomicLong()	| new Object()
-		AggregationType.SUM		| new AtomicLong()	| new Object()
 	}
 
 	@Unroll
@@ -210,84 +200,6 @@ class FunctionHelperSpec extends Specification {
 	}
 
 	@Unroll
-	def "check unsupported accumulator aggregations"(def aggregation, def current) {
-		when:
-		FunctionHelper.apply(aggregation, 10, current)
-
-		then:
-		thrown(IllegalStateException)
-
-		where:
-		aggregation				| current
-		AggregationType.MAX		| new LongAdder()
-		AggregationType.MIN		| new LongAdder()
-		AggregationType.SUM		| accumulator()
-		AggregationType.COUNT	| accumulator()
-		AggregationType.AVERAGE	| new LongAdder()
-		AggregationType.AVERAGE	| accumulator()
-	}
-
-	def accumulator() {
-		new LongAccumulator(null, 0)
-	}
-
-	@Unroll
-	def "check apply for LongAdder"(def type, def current, def update, def expected) {
-		when:
-		FunctionHelper.apply(type, update, current)
-
-		then:
-		current.sum() == expected
-
-		where:
-		type 					| current 	| update | expected
-		AggregationType.SUM 	| adder(10)	| 20	 | 30
-		AggregationType.COUNT 	| adder(10)	| 20	 | 11
-		AggregationType.SUM 	| adder(10)	| 20l	 | 30l
-		AggregationType.COUNT 	| adder(10)	| 20l	 | 11l
-	}
-
-	@Unroll
-	def "check apply for Accumulator"(def type, def current, def update, def expected) {
-		when:
-		FunctionHelper.apply(type, update, current)
-
-		then:
-		current.get() == expected
-
-		where:
-		type 					| current 				| update | expected
-		AggregationType.MIN 	| minAccumulator(10)	| 20	 | 10
-		AggregationType.MIN 	| minAccumulator(10)	| 5	 	 | 5
-		AggregationType.MAX 	| maxAccumulator(10)	| 20	 | 20
-		AggregationType.MAX 	| maxAccumulator(10)	| 5	 	 | 10
-	}
-
-	def adder(def initialValue) {
-		def result = new LongAdder()
-
-		result.add(initialValue)
-
-		result
-	}
-
-	def minAccumulator(def initialValue) {
-		def result = new MinAccumulator()
-
-		result.accumulate(initialValue)
-
-		result
-	}
-
-	def maxAccumulator(def initialValue) {
-		def result = new MaxAccumulator()
-
-		result.accumulate(initialValue)
-
-		result
-	}
-
-	@Unroll
 	def "check count for object with AtomicLong result"(Object update, int expectedResult) {
 		when:
 		def current = new AtomicLong()
@@ -295,23 +207,6 @@ class FunctionHelperSpec extends Specification {
 
 		then:
 		current.get() == expectedResult
-
-		where:
-		update 		 		| expectedResult
-		new Object() 		| 1
-		[1, 2, 3].toArray() | 3
-		[1: 1, 2: 2, 3: 3]  | 3
-		[1, 2, 3] as List 	| 3
-	}
-
-	@Unroll
-	def "check count for object with LongAdder result"(Object update, int expectedResult) {
-		when:
-		def current = new LongAdder()
-		FunctionHelper.apply(AggregationType.COUNT, update, current)
-
-		then:
-		current.sum() == expectedResult
 
 		where:
 		update 		 		| expectedResult

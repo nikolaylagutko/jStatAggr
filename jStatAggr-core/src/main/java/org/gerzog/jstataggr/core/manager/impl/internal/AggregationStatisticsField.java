@@ -17,7 +17,6 @@ package org.gerzog.jstataggr.core.manager.impl.internal;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.LongAdder;
 
 import javassist.CtClass;
 import javassist.CtField;
@@ -25,8 +24,6 @@ import javassist.CtMethod;
 
 import org.gerzog.jstataggr.AggregationType;
 import org.gerzog.jstataggr.FieldType;
-import org.gerzog.jstataggr.core.functions.MaxAccumulator;
-import org.gerzog.jstataggr.core.functions.MinAccumulator;
 import org.gerzog.jstataggr.core.templates.TemplateHelper;
 import org.gerzog.jstataggr.core.utils.FieldUtils;
 import org.gerzog.jstataggr.core.utils.InitializerUtils;
@@ -39,36 +36,24 @@ class AggregationStatisticsField extends AbstractStatisticsField {
 
 	private final AggregationType aggregationType;
 
-	protected AggregationStatisticsField(final String modifier,
-			final String fieldName, final Class<?> methodClass,
-			final Class<?> fieldClass, final AggregationType aggregationType,
-			final FieldType fieldType) {
-		super(modifier, fieldName, methodClass, defineFieldType(fieldClass,
-				aggregationType, fieldType));
+	protected AggregationStatisticsField(final String modifier, final String fieldName, final Class<?> methodClass, final Class<?> fieldClass, final AggregationType aggregationType, final FieldType fieldType) {
+		super(modifier, fieldName, methodClass, defineFieldType(fieldClass, aggregationType, fieldType));
 
 		this.aggregationType = aggregationType;
 	}
 
-	protected AggregationStatisticsField(final String fieldName,
-			final Class<?> methodClass, final Class<?> fieldClass,
-			final AggregationType aggregationType, final FieldType fieldType) {
-		super(fieldName, methodClass, defineFieldType(fieldClass,
-				aggregationType, fieldType));
+	protected AggregationStatisticsField(final String fieldName, final Class<?> methodClass, final Class<?> fieldClass, final AggregationType aggregationType, final FieldType fieldType) {
+		super(fieldName, methodClass, defineFieldType(fieldClass, aggregationType, fieldType));
 
 		this.aggregationType = aggregationType;
 	}
 
-	public AggregationStatisticsField(final String fieldName,
-			final Class<?> dataType, final AggregationType aggregationType,
-			final FieldType fieldType) {
+	public AggregationStatisticsField(final String fieldName, final Class<?> dataType, final AggregationType aggregationType, final FieldType fieldType) {
 		this(fieldName, dataType, dataType, aggregationType, fieldType);
 	}
 
-	public AggregationStatisticsField(final String modifier,
-			final String fieldName, final Class<?> dataType,
-			final AggregationType aggregationType, final FieldType fieldType) {
-		this(modifier, fieldName, dataType, dataType, aggregationType,
-				fieldType);
+	public AggregationStatisticsField(final String modifier, final String fieldName, final Class<?> dataType, final AggregationType aggregationType, final FieldType fieldType) {
+		this(modifier, fieldName, dataType, dataType, aggregationType, fieldType);
 	}
 
 	@Override
@@ -87,21 +72,17 @@ class AggregationStatisticsField extends AbstractStatisticsField {
 	}
 
 	protected String getUpdaterText() {
-		return TemplateHelper.simpleUpdater(getModifier(), getFieldName(),
-				getMethodType(), getFieldType(), aggregationType);
+		return TemplateHelper.simpleUpdater(getModifier(), getFieldName(), getMethodType(), getFieldType(), aggregationType);
 	}
 
 	@Override
 	protected String generateFieldName() {
-		return FieldUtils.getAggregationFieldName(super.generateFieldName(),
-				aggregationType);
+		return FieldUtils.getAggregationFieldName(super.generateFieldName(), aggregationType);
 	}
 
 	@Override
-	protected void addField(final CtClass clazz, final CtField field)
-			throws Exception {
-		clazz.addField(field, InitializerUtils.getInitializer(getFieldType(),
-				aggregationType));
+	protected void addField(final CtClass clazz, final CtField field) throws Exception {
+		clazz.addField(field, InitializerUtils.getInitializer(getFieldType(), aggregationType));
 	}
 
 	@Override
@@ -119,18 +100,14 @@ class AggregationStatisticsField extends AbstractStatisticsField {
 		return true;
 	}
 
-	protected static Class<?> defineFieldType(final Class<?> originalFieldType,
-			final AggregationType aggregation, final FieldType fieldType) {
+	protected static Class<?> defineFieldType(final Class<?> originalFieldType, final AggregationType aggregation, final FieldType fieldType) {
 		switch (fieldType) {
 		case PRIMITIVE:
 			return originalFieldType;
-		case ACCUMULATOR:
-			return getAccumulatorType(originalFieldType, aggregation);
 		case ATOMIC:
 			return getAtomicType(originalFieldType);
 		default:
-			throw new IllegalStateException("Unsupported FieldType <"
-					+ fieldType + ">");
+			throw new IllegalStateException("Unsupported FieldType <" + fieldType + ">");
 		}
 	}
 
@@ -141,55 +118,6 @@ class AggregationStatisticsField extends AbstractStatisticsField {
 			return AtomicInteger.class;
 		}
 
-		throw new IllegalArgumentException("Unsupported type <"
-				+ type.getSimpleName() + ">");
-	}
-
-	private static Class<?> getAccumulatorType(final Class<?> type,
-			final AggregationType aggregation) {
-		switch (aggregation) {
-		case MIN:
-			return getMinAccumulatorType(type);
-		case MAX:
-			return getMaxAccumulatorType(type);
-		case COUNT:
-		case SUM:
-			return getAdderType(type);
-		default:
-			throw new IllegalStateException("Unsupported aggregation <"
-					+ aggregation + "> for Accumulator type");
-		}
-	}
-
-	private static Class<?> getAdderType(final Class<?> type) {
-		if (type.equals(Long.class) || type.equals(long.class)
-				|| type.equals(Integer.class) || type.equals(int.class)) {
-			return LongAdder.class;
-		}
-
-		throw new IllegalArgumentException("Unsupported class for Adder: <"
-				+ type.getSimpleName() + ">");
-	}
-
-	private static Class<?> getMinAccumulatorType(final Class<?> type) {
-		if (type.equals(Long.class) || type.equals(long.class)
-				|| type.equals(Integer.class) || type.equals(int.class)) {
-			return MinAccumulator.class;
-		}
-
-		throw new IllegalArgumentException(
-				"Unsupported class for MinAccumulator: <"
-						+ type.getSimpleName() + ">");
-	}
-
-	private static Class<?> getMaxAccumulatorType(final Class<?> type) {
-		if (type.equals(Long.class) || type.equals(long.class)
-				|| type.equals(Integer.class) || type.equals(int.class)) {
-			return MaxAccumulator.class;
-		}
-
-		throw new IllegalArgumentException(
-				"Unsupported class for MaxAccumulator: <"
-						+ type.getSimpleName() + ">");
+		throw new IllegalArgumentException("Unsupported type <" + type.getSimpleName() + ">");
 	}
 }

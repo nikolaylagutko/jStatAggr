@@ -15,8 +15,6 @@
  */
 package org.gerzog.jstataggr.core.manager.impl;
 
-import static org.gerzog.jstataggr.core.utils.Throwables.propogate;
-
 import java.beans.PropertyDescriptor;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -25,6 +23,7 @@ import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.lang3.StringUtils;
@@ -72,23 +71,29 @@ public class StatisticsManagerImpl implements IStatisticsManager {
 
 	@Override
 	public void updateStatistics(final Object statisticsEntry, final String statisticsName) {
-		StatisticsCollector collector = collectors.get(statisticsName);
+		try {
+			StatisticsCollector collector = collectors.get(statisticsName);
 
-		if (collector == null) {
-			collector = createCollector(statisticsEntry.getClass(), statisticsName);
+			if (collector == null) {
+				collector = createCollector(statisticsEntry.getClass(), statisticsName);
+			}
+
+			collector.updateStatistics(statisticsEntry);
+		} catch (final RuntimeException e) {
+			throw e;
+		} catch (final Throwable e) {
+			throw new RuntimeException("An error occured during updating statistics <" + statisticsName + "> with entry <" + statisticsEntry + ">", e);
 		}
-
-		collector.updateStatistics(statisticsEntry);
 	}
 
-	protected synchronized StatisticsCollector createCollector(final Class<?> statisticsClass, final String statisticsName) {
+	protected synchronized StatisticsCollector createCollector(final Class<?> statisticsClass, final String statisticsName) throws Throwable {
 		final StatisticsCollectorBuilder builder = new StatisticsCollectorBuilder(statisticsName, expressionHandler);
 
 		initializeCollector(statisticsClass, builder);
 
 		final StatisticsCollector result = builder.build();
 
-		final StatisticsCollector previous = collectors.putIfAbsent(statisticsName, result);
+		final StatisticsCollector previous = collectors.put(statisticsName, result);
 
 		return previous == null ? result : result;
 	}
@@ -134,22 +139,27 @@ public class StatisticsManagerImpl implements IStatisticsManager {
 	}
 
 	protected MethodHandle findGetter(final Class<?> statisticsClass, final Field field) {
-		return propogate(() -> {
+		try {
 			final Method readMethod = new PropertyDescriptor(field.getName(), statisticsClass).getReadMethod();
 
 			return MethodHandles.lookup().unreflect(readMethod);
-		}, (e) -> new IllegalStateException("There is no public getter for field <" + field + ">", e));
+		} catch (final Throwable e) {
+			throw new IllegalStateException("There is no public getter for field <" + field + ">", e);
+		}
 	}
 
 	@Override
 	public Map<String, Collection<Object>> collectStatistics(final String statisticsName, final IStatisticsFilter filter, final boolean cleanup) {
 		final Map<String, Collection<Object>> result = new HashMap<>();
 
-		collectors.forEach((name, collector) -> {
+		for (final Entry<String, StatisticsCollector> entry : collectors.entrySet()) {
+			final String name = entry.getKey();
+			final StatisticsCollector collector = entry.getValue();
+
 			if ((statisticsName == null) || name.equals(statisticsName)) {
 				result.put(name, collector.collectStatistics(filter, cleanup));
 			}
-		});
+		}
 
 		return result;
 	}

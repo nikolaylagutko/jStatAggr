@@ -15,13 +15,19 @@
  */
 package org.gerzog.jstataggr;
 
-
 /**
  * @author Nikolay Lagutko (nikolay.lagutko@mail.com)
  *
  */
-@FunctionalInterface
 public interface IStatisticsFilter {
+
+	public IStatisticsFilter ALL_FILTER = new IStatisticsFilter() {
+
+		@Override
+		public boolean isApplied(final IStatisticsKey statisticsKey) {
+			return true;
+		}
+	};
 
 	boolean isApplied(IStatisticsKey statisticsKey);
 
