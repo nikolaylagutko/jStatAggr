@@ -4,9 +4,14 @@ buildscript {
 	}
 	
 	dependencies {
-		classpath group: 'nl.javadude.gradle.plugins',	name: 'license-gradle-plugin', version: gradleLicenseVersion
+		classpath group: 'nl.javadude.gradle.plugins',	name: 'license-gradle-plugin',	version: gradleLicenseVersion
+		classpath group: 'au.com.ish.gradle',			name: 'release',				version: gradleReleaseVersion, {
+			exclude module: 'svnkit'
+		}
 	}
 }
+
+apply plugin: 'release'
 
 subprojects {
 	apply plugin: 'java'
@@ -32,6 +37,10 @@ subprojects {
 	license {
 		header rootProject.file("HEADER")
 	}
+}
+
+release {
+	scm = 'git'
 }
 
 task wrapper(type: Wrapper) {
