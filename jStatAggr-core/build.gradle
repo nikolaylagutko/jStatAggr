@@ -9,6 +9,8 @@ dependencies {
 }
 
 def pomConfig = {
+	resolveStrategy = Closure.DELEGATE_FIRST
+	description 'Java library to simplify Statistics Aggregation'
 	licenses {
 		license {
 			name 'The Apache Software License, Version 2.0'
@@ -28,17 +30,12 @@ def pomConfig = {
 publishing {
 	publications {
 		mavenJava(MavenPublication) {
-			artifactId 'core'
-			
 			from components.java
 			artifact sourcesJar
 			artifact javadocJar
 			
 			pom.withXml {
-				def root = asNode()
-				
-				root.appendNode('description', 'Java library to simplify Statistics Aggregation')
-				root.children().last() + pomConfig
+				asNode().children().last() + pomConfig
 			}	
 		}
 	}
@@ -56,8 +53,6 @@ bintray {
 		desc = 'Statistics Aggregator'
 		licenses = ['Apache-2.0']
 	}
-	
-	dryRun = true
 }
 
 task install(dependsOn: 'publishMavenJavaPublicationToMavenLocal') << {
