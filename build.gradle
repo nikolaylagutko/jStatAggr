@@ -53,6 +53,7 @@ subprojects {
 
 release {
 	scm = 'git'
+	allowLocalModifications = true
 }
 
 task wrapper(type: Wrapper) {

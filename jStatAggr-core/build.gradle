@@ -56,7 +56,7 @@ bintray {
 		licenses = ['Apache-2.0']
 	}
 	
-	dryRun = true
+	dryRun = version.endsWith("SNAPSHOT")
 }
 
 task install(dependsOn: 'publishMavenJavaPublicationToMavenLocal') << {
