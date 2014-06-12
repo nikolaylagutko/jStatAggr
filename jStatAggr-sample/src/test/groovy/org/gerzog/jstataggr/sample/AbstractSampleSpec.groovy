@@ -131,7 +131,6 @@ abstract class AbstractSampleSpec extends Specification {
 
 		result.addAll(generateStatisticsOne())
 		result.addAll(generateStatisticsTwo())
-		result.addAll(generateStatisticsThree())
 
 		result
 	}
