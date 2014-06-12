@@ -91,6 +91,58 @@ abstract class AbstractSampleSpec extends Specification {
 		}
 	}
 
+	class StatisticsThreeVerifier implements IStatisticsWriter {
+
+		private boolean isCalled = false
+
+		private String statisticsName
+
+		private Collection<Object> data
+
+		@Override
+		public void writeStatistics(String statisticsName,
+				Collection<Object> statisticsData) {
+			if (statisticsName == 'sample_statistics_three') {
+				isCalled = true
+				this.statisticsName = statisticsName
+				this.data = statisticsData
+			}
+		}
+
+		public void verify() {
+			assert isCalled
+			assert data.size() == 6
+
+			def sum = [0..9].sum().sum() * 100
+
+			data.each {
+				//verify average
+				assert it.value1Average == 450
+				assert it.value2Average == 450
+
+				//verify count
+				assert it.value1Count == 10
+				assert it.value2Count == 10
+				assert it.value3Count == 10
+
+				//verify max
+				assert it.value1Max == 900
+				assert it.value2Max == 900
+				assert it.value3Max == 900
+
+				//verify min
+				assert it.value1Min == 0
+				assert it.value2Min == 0
+				assert it.value3Min == 0
+
+				//verify sum
+				assert it.value1Sum == sum
+				assert it.value2Sum == sum
+				assert it.value3Sum == sum
+			}
+		}
+	}
+
 	IStatisticsHandler handler
 
 	IStatisticsManager manager
@@ -99,13 +151,16 @@ abstract class AbstractSampleSpec extends Specification {
 
 	IStatisticsWriter statisticsTwoVerifier = new StatisticsTwoVerifier()
 
+	IStatisticsWriter statisticsThreeVerifier = new StatisticsThreeVerifier()
+
 	def setup() {
 		manager = new StatisticsManagerImpl()
 
 		handler = createHandler(manager)
 		handler.statisticsWriters = [
 			statisticsOneVerifier,
-			statisticsTwoVerifier
+			statisticsTwoVerifier,
+			statisticsThreeVerifier
 		]
 	}
 
@@ -122,6 +177,7 @@ abstract class AbstractSampleSpec extends Specification {
 		noExceptionThrown()
 		statisticsOneVerifier.verify()
 		statisticsTwoVerifier.verify()
+		statisticsThreeVerifier.verify()
 	}
 
 	abstract IStatisticsHandler createHandler(IStatisticsManager manager)
@@ -131,6 +187,7 @@ abstract class AbstractSampleSpec extends Specification {
 
 		result.addAll(generateStatisticsOne())
 		result.addAll(generateStatisticsTwo())
+		result.addAll(generateStatisticsThree())
 
 		result
 	}
@@ -145,6 +202,27 @@ abstract class AbstractSampleSpec extends Specification {
 					statistics.key = key1.toString()
 					statistics.anotherKey = key2.toString()
 					statistics.value = it * 100
+
+					result << statistics
+				}
+			}
+		}
+
+		result
+	}
+
+	private List<StatisticsThree> generateStatisticsThree() {
+		def result = []
+
+		2.times { key1 ->
+			3.times { key2 ->
+				10.times {
+					StatisticsThree statistics = new StatisticsThree()
+					statistics.key = key1.toString()
+					statistics.anotherKey = key2.toString()
+					statistics.value1 = it * 100
+					statistics.value2 = it * 100
+					statistics.value3 = it * 100
 
 					result << statistics
 				}
