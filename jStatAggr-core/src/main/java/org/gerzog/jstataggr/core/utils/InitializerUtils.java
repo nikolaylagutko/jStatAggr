@@ -15,6 +15,10 @@
  */
 package org.gerzog.jstataggr.core.utils;
 
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.LongAdder;
+
 import javassist.CtField.Initializer;
 
 import org.gerzog.jstataggr.AggregationType;
@@ -33,7 +37,8 @@ public final class InitializerUtils {
 
 	}
 
-	public static Initializer getInitializer(final Class<?> type, final AggregationType aggregation) {
+	public static Initializer getInitializer(final Class<?> type,
+			final AggregationType aggregation) throws Exception {
 		switch (aggregation) {
 		case MIN:
 			return getMaxValueInitializer(type);
@@ -44,38 +49,72 @@ public final class InitializerUtils {
 		case AVERAGE:
 			return getZeroInitializer(type);
 		default:
-			throw new IllegalArgumentException("Initializer for <" + aggregation + "> is not yet defined");
+			throw new IllegalArgumentException("Initializer for <"
+					+ aggregation + "> is not yet defined");
 		}
 	}
 
-	private static Initializer getMinValueInitializer(final Class<?> type) {
+	private static Initializer getMinValueInitializer(final Class<?> type)
+			throws Exception {
 		if (type.equals(Integer.class) || type.equals(int.class)) {
 			return Initializer.constant(Integer.MIN_VALUE);
 		} else if (type.equals(Long.class) || type.equals(long.class)) {
 			return Initializer.constant(Long.MIN_VALUE);
+		} else if (type.equals(AtomicInteger.class)) {
+			return atomicIntegerInitializer(Integer.MIN_VALUE);
+		} else if (type.equals(AtomicLong.class)) {
+			return atomicLongInitializer(Long.MIN_VALUE);
 		}
 
-		throw new IllegalArgumentException("Initialzer for <" + type.getSimpleName() + "> class is not yet defined");
+		throw new IllegalArgumentException("Initialzer for <"
+				+ type.getSimpleName() + "> class is not yet defined");
 	}
 
-	private static Initializer getMaxValueInitializer(final Class<?> type) {
+	private static Initializer getMaxValueInitializer(final Class<?> type)
+			throws Exception {
 		if (type.equals(Integer.class) || type.equals(int.class)) {
 			return Initializer.constant(Integer.MAX_VALUE);
 		} else if (type.equals(Long.class) || type.equals(long.class)) {
 			return Initializer.constant(Long.MAX_VALUE);
+		} else if (type.equals(AtomicInteger.class)) {
+			return atomicIntegerInitializer(Integer.MAX_VALUE);
+		} else if (type.equals(AtomicLong.class)) {
+			return atomicLongInitializer(Long.MAX_VALUE);
 		}
 
-		throw new IllegalArgumentException("Initialzer for <" + type.getSimpleName() + "> class is not yet defined");
+		throw new IllegalArgumentException("Initialzer for <"
+				+ type.getSimpleName() + "> class is not yet defined");
 	}
 
-	private static Initializer getZeroInitializer(final Class<?> type) {
+	private static Initializer atomicLongInitializer(final long value)
+			throws Exception {
+		return Initializer.byExpr("new " + AtomicLong.class.getName() + "("
+				+ Long.toString(value) + "l)");
+	}
+
+	private static Initializer atomicIntegerInitializer(final int value)
+			throws Exception {
+		return Initializer.byExpr("new " + AtomicInteger.class.getName() + "("
+				+ Integer.toString(value) + ")");
+	}
+
+	private static Initializer getZeroInitializer(final Class<?> type)
+			throws Exception {
 		if (type.equals(Integer.class) || type.equals(int.class)) {
 			return Initializer.constant(ZERO_INT);
 		} else if (type.equals(Long.class) || type.equals(long.class)) {
 			return Initializer.constant(ZERO_LONG);
+		} else if (type.equals(LongAdder.class)) {
+			return Initializer
+					.byExpr("new " + LongAdder.class.getName() + "()");
+		} else if (type.equals(AtomicLong.class)) {
+			return atomicLongInitializer(ZERO_LONG);
+		} else if (type.equals(AtomicInteger.class)) {
+			return atomicIntegerInitializer(ZERO_INT);
 		}
 
-		throw new IllegalArgumentException("Initialzer for <" + type.getSimpleName() + "> class is not yet defined");
+		throw new IllegalArgumentException("Initialzer for <"
+				+ type.getSimpleName() + "> class is not yet defined");
 	}
 
 }

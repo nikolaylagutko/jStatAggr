@@ -15,6 +15,7 @@
  */
 package org.gerzog.jstataggr.core.templates
 
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.LongAccumulator
 import java.util.concurrent.atomic.LongAdder
@@ -32,10 +33,10 @@ class TemplateHelperSpec extends Specification {
 
 	def "check getter method"() {
 		when:
-		def result = TemplateHelper.getter('public', "value", Integer.class)
+		def result = TemplateHelper.getter('public', "value", int.class, AtomicInteger)
 
 		then:
-		result == 'public java.lang.Integer getValue() {return this.value;}'
+		result == 'public int getValue() {return (int) this.value.get();}'
 	}
 
 	def "check method creation"() {
@@ -48,18 +49,18 @@ class TemplateHelperSpec extends Specification {
 
 	def "check getter method body"() {
 		when:
-		def result = TemplateHelper.getterBody('value')
+		def result = TemplateHelper.getterBody(Integer.class, 'value')
 
 		then:
-		result == 'return this.value;'
+		result == 'return (java.lang.Integer) this.value;'
 	}
 
 	def "check setter method"() {
 		when:
-		def result = TemplateHelper.setter('public', 'value', Integer.class)
+		def result = TemplateHelper.setter('public', 'value', int.class)
 
 		then:
-		result == 'public void setValue(java.lang.Integer value) {this.value = value;}'
+		result == 'public void setValue(int value) {this.value = value;}'
 	}
 
 	def "check setter method body" () {
@@ -73,7 +74,7 @@ class TemplateHelperSpec extends Specification {
 	@Unroll
 	def "check simple updater body"(AggregationType aggregation, String postfix) {
 		when:
-		def result = TemplateHelper.simpleUpdaterBody('value', aggregation)
+		def result = TemplateHelper.simpleUpdaterBody('value', aggregation, int.class)
 
 		then:
 		result == "this.value${postfix} = org.gerzog.jstataggr.core.functions.FunctionHelper.apply(org.gerzog.jstataggr.AggregationType.${aggregation.name()}, value, this.value${postfix});"
@@ -86,9 +87,24 @@ class TemplateHelperSpec extends Specification {
 	}
 
 	@Unroll
+	def "check simple updater body for object"(AggregationType aggregation, String postfix) {
+		when:
+		def result = TemplateHelper.simpleUpdaterBody('value', aggregation, AtomicLong.class)
+
+		then:
+		result == "org.gerzog.jstataggr.core.functions.FunctionHelper.apply(org.gerzog.jstataggr.AggregationType.${aggregation.name()}, value, this.value${postfix});"
+
+		where:
+		aggregation 		| postfix
+		AggregationType.MIN | 'Min'
+		AggregationType.MAX | 'Max'
+		AggregationType.SUM	| 'Sum'
+	}
+
+	@Unroll
 	def "check unsupported simple updaters"(AggregationType aggregation) {
 		when:
-		def result = TemplateHelper.simpleUpdaterBody('value', aggregation)
+		def result = TemplateHelper.simpleUpdaterBody('value', aggregation, int.class)
 
 		then:
 		thrown(IllegalArgumentException)
@@ -102,7 +118,7 @@ class TemplateHelperSpec extends Specification {
 	@Unroll
 	def "check updater method"(AggregationType aggregation, String postfix) {
 		when:
-		def result = TemplateHelper.simpleUpdater('public', 'value', int.class, aggregation)
+		def result = TemplateHelper.simpleUpdater('public', 'value', int.class, int.class, aggregation)
 
 		then:
 		result.startsWith("public void updateValue${postfix}(int value)")
@@ -150,10 +166,18 @@ class TemplateHelperSpec extends Specification {
 
 	def "check average updater method"() {
 		when:
-		def result = TemplateHelper.averageUpdaterBody('averageField')
+		def result = TemplateHelper.averageUpdaterBody('averageField', int.class)
 
 		then:
 		result == 'this.averageField = org.gerzog.jstataggr.core.functions.FunctionHelper.apply(averageField, averageFieldCount, this.averageField);'
+	}
+
+	def "check average updater method for object"() {
+		when:
+		def result = TemplateHelper.averageUpdaterBody('averageField', AtomicInteger.class)
+
+		then:
+		result == 'org.gerzog.jstataggr.core.functions.FunctionHelper.apply(averageField, averageFieldCount, this.averageField);'
 	}
 
 	def "check field access lines"(def clazz, def expected) {

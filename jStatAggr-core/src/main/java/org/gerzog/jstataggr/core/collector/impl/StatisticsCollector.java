@@ -28,9 +28,14 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import javassist.ClassPool;
 import javassist.CtClass;
+import net.sf.cglib.beans.BeanCopier;
+import net.sf.cglib.beans.BeanGenerator;
 
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.Transformer;
 import org.apache.commons.lang3.StringUtils;
 import org.gerzog.jstataggr.AggregationType;
+import org.gerzog.jstataggr.FieldType;
 import org.gerzog.jstataggr.IStatisticsFilter;
 import org.gerzog.jstataggr.IStatisticsKey;
 import org.gerzog.jstataggr.core.collector.impl.StatisticsKey.StatisticsKeyBuilder;
@@ -56,7 +61,8 @@ public class StatisticsCollector {
 
 		private MethodHandle accessor;
 
-		public FieldInfo(final String name, final String expression, final MethodHandle getter) {
+		public FieldInfo(final String name, final String expression,
+				final MethodHandle getter) {
 			this.name = name;
 			this.expression = expression;
 			this.getter = getter;
@@ -91,27 +97,41 @@ public class StatisticsCollector {
 
 		private final Map<IStatisticsField, FieldInfo> statisticsFieldInfo = new HashMap<>();
 
-		public StatisticsCollectorBuilder(final String className, final IExpressionHandler expressionHandler) {
+		public StatisticsCollectorBuilder(final String className,
+				final IExpressionHandler expressionHandler) {
 			this.result = new StatisticsCollector(expressionHandler);
 			this.className = className;
 		}
 
-		public StatisticsCollectorBuilder addStatisticsKey(final Field field, final MethodHandle getter, final String expression) {
+		public StatisticsCollectorBuilder addStatisticsKey(final Field field,
+				final MethodHandle getter, final String expression) {
 
-			add(field.getName(), expression, StatisticsFields.forStatisticsKey(field.getName(), field.getType()), getter);
+			add(field.getName(),
+					expression,
+					StatisticsFields.forStatisticsKey(field.getName(),
+							field.getType()), getter);
 
 			return this;
 		}
 
-		public StatisticsCollectorBuilder addAggregation(final Field field, final AggregationType[] aggregationTypes, final MethodHandle getter, final String expression) {
+		public StatisticsCollectorBuilder addAggregation(final Field field,
+				final AggregationType[] aggregationTypes,
+				final FieldType fieldType, final MethodHandle getter,
+				final String expression) {
 			for (final AggregationType type : aggregationTypes) {
-				add(field.getName(), expression, StatisticsFields.forAggregation(field.getName(), field.getType(), type), getter);
+				add(field.getName(),
+						expression,
+						StatisticsFields.forAggregation(field.getName(),
+								field.getType(), type, fieldType), getter);
 			}
 
 			return this;
 		}
 
-		private StatisticsCollectorBuilder add(final String name, final String expression, final IStatisticsField statisticsField, final MethodHandle getter) {
+		private StatisticsCollectorBuilder add(final String name,
+				final String expression,
+				final IStatisticsField statisticsField,
+				final MethodHandle getter) {
 			final FieldInfo fieldInfo = new FieldInfo(name, expression, getter);
 
 			statisticsFieldInfo.put(statisticsField, fieldInfo);
@@ -130,12 +150,20 @@ public class StatisticsCollector {
 	private static class CollectorClassInfo {
 		private final Class<?> bucketClass;
 
+		private Class<?> externalEntityClass;
+
 		private final Map<String, FieldInfo> keys = new HashMap<>();
 
 		private final List<FieldInfo> updaters = new ArrayList<>();
 
+		private BeanCopier externalEntityConverter;
+
 		public CollectorClassInfo(final Class<?> bucketClass) {
 			this.bucketClass = bucketClass;
+		}
+
+		public BeanCopier getExternalEntityConverter() {
+			return externalEntityConverter;
 		}
 
 		public Class<?> getBucketClass() {
@@ -149,6 +177,17 @@ public class StatisticsCollector {
 		public List<FieldInfo> getUpdaters() {
 			return updaters;
 		}
+
+		public Class<?> getExternalEntityClass() {
+			return externalEntityClass;
+		}
+
+		public void setExternalEntityClass(final Class<?> externalEntityClass) {
+			this.externalEntityClass = externalEntityClass;
+			this.externalEntityConverter = BeanCopier.create(bucketClass,
+					externalEntityClass, false);
+		}
+
 	}
 
 	private CollectorClassInfo classInfo;
@@ -157,15 +196,32 @@ public class StatisticsCollector {
 
 	private final IExpressionHandler expressionHandler;
 
+	private final Transformer<Object, Object> exportTransformer = (input) -> convert(input);
+
 	// LN: 2.06.2014, made package-visible for tests
 	StatisticsCollector(final IExpressionHandler expressionHandler) {
 		this.expressionHandler = expressionHandler;
 	}
 
-	protected static CollectorClassInfo generateClassInfo(final String className, final Map<IStatisticsField, FieldInfo> fieldInfo) {
+	private Object convert(final Object input) {
+		return propogate(() -> {
+			final Object externalEntity = classInfo.getExternalEntityClass()
+					.newInstance();
+
+			classInfo.getExternalEntityConverter().copy(input, externalEntity,
+					null);
+
+			return externalEntity;
+		});
+	}
+
+	protected static CollectorClassInfo generateClassInfo(
+			final String className,
+			final Map<IStatisticsField, FieldInfo> fieldInfo) {
 		final ClassPool pool = ClassPool.getDefault();
 
-		final CtClass clazz = pool.makeClass(PACKAGE_PREFIX + StringUtils.capitalize(className));
+		final CtClass clazz = pool.makeClass(PACKAGE_PREFIX
+				+ StringUtils.capitalize(className));
 
 		fieldInfo.keySet().forEach(info -> {
 			propogate(() -> info.generate(clazz));
@@ -176,12 +232,15 @@ public class StatisticsCollector {
 		});
 	}
 
-	protected static CollectorClassInfo generateClassInfo(final Class<?> clazz, final Map<IStatisticsField, FieldInfo> fieldInfo) {
+	protected static CollectorClassInfo generateClassInfo(final Class<?> clazz,
+			final Map<IStatisticsField, FieldInfo> fieldInfo) {
 		final CollectorClassInfo result = new CollectorClassInfo(clazz);
+		final Map<String, Class<?>> methodInfo = new HashMap<>();
 
 		fieldInfo.forEach((statisticsInfo, bucketInfo) -> {
 			propogate(() -> {
-				final MethodHandle accessMethod = statisticsInfo.getAccessMethodHandle(clazz);
+				final MethodHandle accessMethod = statisticsInfo
+						.getAccessMethodHandle(clazz);
 
 				bucketInfo.setAccessor(accessMethod);
 
@@ -190,8 +249,17 @@ public class StatisticsCollector {
 				} else {
 					result.getKeys().put(bucketInfo.getName(), bucketInfo);
 				}
+
+				methodInfo.put(statisticsInfo.getFieldName(),
+						statisticsInfo.getMethodType());
 			});
 		});
+
+		final BeanGenerator externalBeanGenerator = new BeanGenerator();
+		BeanGenerator.addProperties(externalBeanGenerator, methodInfo);
+
+		result.setExternalEntityClass((Class<?>) externalBeanGenerator
+				.createClass());
 
 		return result;
 	}
@@ -202,7 +270,8 @@ public class StatisticsCollector {
 		updateStatistics(statisticsBucket, statisticsData);
 	}
 
-	protected void updateStatistics(final Object statisticsBucket, final Object statisticsData) {
+	protected void updateStatistics(final Object statisticsBucket,
+			final Object statisticsData) {
 		classInfo.getUpdaters().forEach(updater -> {
 			propogate(() -> {
 				Object value = updater.getGetter().invoke(statisticsData);
@@ -242,7 +311,8 @@ public class StatisticsCollector {
 		return builder.build();
 	}
 
-	protected Object generateStatisticsBucket(final IStatisticsKey key, final Object statisticsData) {
+	protected Object generateStatisticsBucket(final IStatisticsKey key,
+			final Object statisticsData) {
 		return propogate(() -> {
 			final Object result = classInfo.getBucketClass().newInstance();
 
@@ -266,21 +336,26 @@ public class StatisticsCollector {
 		return statistics;
 	}
 
-	public Collection<Object> collectStatistics(final IStatisticsFilter filter, final boolean cleanup) {
+	public Collection<Object> collectStatistics(final IStatisticsFilter filter,
+			final boolean cleanup) {
 		final Collection<Object> result = new ArrayList<>();
 
-		statistics.keySet().forEach(key -> {
-			if (filter.isApplied(key)) {
-				final Object data = cleanup ? statistics.remove(key) : statistics.get(key);
+		statistics.keySet().forEach(
+				key -> {
+					if (filter.isApplied(key)) {
+						final Object data = cleanup ? statistics.remove(key)
+								: statistics.get(key);
 
-				result.add(data);
-			}
-		});
+						result.add(data);
+					}
+				});
 
-		return result;
+		return CollectionUtils
+				.transformingCollection(result, exportTransformer);
 	}
 
-	protected Object updateValue(final Object original, final String expression) throws Exception {
+	protected Object updateValue(final Object original, final String expression)
+			throws Exception {
 		if ((expressionHandler != null) && (expression != null)) {
 			return expressionHandler.invokeExpression(expression, original);
 		}

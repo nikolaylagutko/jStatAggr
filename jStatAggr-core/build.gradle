@@ -1,4 +1,6 @@
 dependencies {
-	compile group: 'org.apache.commons',	name: 'commons-lang3',	version: commonsLangVersion
-	compile group: 'org.javassist',			name: 'javassist',		version: javassistVersion
+	compile group: 'org.apache.commons',	name: 'commons-lang3',			version: commonsLangVersion
+	compile group: 'org.javassist',			name: 'javassist',				version: javassistVersion
+	compile group: 'cglib',					name: 'cglib-nodep',			version: cglibVersion
+	compile group: 'org.apache.commons',	name: 'commons-collections4',	version: commonsCollectionsVersion
 }

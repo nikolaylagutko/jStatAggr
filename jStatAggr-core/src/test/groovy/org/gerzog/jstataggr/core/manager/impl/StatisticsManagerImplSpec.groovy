@@ -18,6 +18,7 @@ package org.gerzog.jstataggr.core.manager.impl
 import java.lang.invoke.MethodHandle
 
 import org.gerzog.jstataggr.AggregationType
+import org.gerzog.jstataggr.FieldType
 import org.gerzog.jstataggr.IStatisticsFilter
 import org.gerzog.jstataggr.IStatisticsManager
 import org.gerzog.jstataggr.annotations.Aggregated
@@ -50,10 +51,10 @@ class StatisticsManagerImplSpec extends Specification {
 		@Aggregated([AggregationType.MIN, AggregationType.SUM, AggregationType.COUNT, AggregationType.AVERAGE])
 		int value
 
-		@Aggregated([AggregationType.COUNT, AggregationType.AVERAGE])
+		@Aggregated(value = [AggregationType.COUNT], fieldType = FieldType.ACCUMULATOR)
 		int value2
 
-		@Aggregated([AggregationType.SUM, AggregationType.AVERAGE])
+		@Aggregated(value = [AggregationType.SUM, AggregationType.AVERAGE], fieldType = FieldType.PRIMITIVE)
 		int value3
 
 		String escaped
@@ -175,6 +176,8 @@ class StatisticsManagerImplSpec extends Specification {
 		setup:
 		def nameField = Statistics.getDeclaredField('name')
 		def valueField = Statistics.getDeclaredField('value')
+		def value2Field = Statistics.getDeclaredField('value2')
+		def value3Field = Statistics.getDeclaredField('value3')
 		def expressionField = Statistics.getDeclaredField('expression')
 
 		when:
@@ -182,13 +185,21 @@ class StatisticsManagerImplSpec extends Specification {
 
 		then:
 		1 * builder.addStatisticsKey(nameField, _ as MethodHandle, null)
+
 		1 * builder.addAggregation(valueField, [
 			AggregationType.MIN,
 			AggregationType.SUM,
 			AggregationType.COUNT,
 			AggregationType.AVERAGE
-		], _ as MethodHandle, null)
+		], FieldType.ATOMIC, _ as MethodHandle, null)
 		1 * builder.addStatisticsKey(expressionField, _ as MethodHandle, '2 + 3')
+
+		1 * builder.addAggregation(value2Field, [AggregationType.COUNT], FieldType.ACCUMULATOR, _ as MethodHandle, null)
+
+		1 * builder.addAggregation(value3Field, [
+			AggregationType.SUM,
+			AggregationType.AVERAGE
+		], FieldType.PRIMITIVE, _ as MethodHandle, null)
 	}
 
 	def "check exception if getter not exists"() {

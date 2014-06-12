@@ -130,7 +130,7 @@ public class StatisticsManagerImpl implements IStatisticsManager {
 	protected void appendAggregation(final StatisticsCollectorBuilder builder, final Class<?> statisticsClass, final Field field, final Aggregated annotation, final String expression) {
 		final MethodHandle getter = findGetter(statisticsClass, field);
 
-		builder.addAggregation(field, annotation.value(), getter, expression);
+		builder.addAggregation(field, annotation.value(), annotation.fieldType(), getter, expression);
 	}
 
 	protected MethodHandle findGetter(final Class<?> statisticsClass, final Field field) {

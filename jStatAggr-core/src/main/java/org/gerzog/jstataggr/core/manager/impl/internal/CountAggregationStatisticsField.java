@@ -16,6 +16,7 @@
 package org.gerzog.jstataggr.core.manager.impl.internal;
 
 import org.gerzog.jstataggr.AggregationType;
+import org.gerzog.jstataggr.FieldType;
 
 /**
  * @author Nikolay Lagutko (nikolay.lagutko@mail.com)
@@ -23,7 +24,14 @@ import org.gerzog.jstataggr.AggregationType;
  */
 class CountAggregationStatisticsField extends AggregationStatisticsField {
 
-	protected CountAggregationStatisticsField(final String fieldName, final Class<?> dataType, final AggregationType aggregationType) {
-		super(fieldName, long.class, dataType, aggregationType);
+	protected CountAggregationStatisticsField(final String fieldName,
+			final Class<?> dataType, final AggregationType aggregationType,
+			final FieldType fieldType) {
+		super(fieldName, dataType, long.class, aggregationType, fieldType);
+	}
+
+	@Override
+	protected Class<?> getGetterCastType() {
+		return long.class;
 	}
 }

@@ -243,6 +243,8 @@ class FunctionHelperSpec extends Specification {
 		type 					| current 	| update | expected
 		AggregationType.SUM 	| adder(10)	| 20	 | 30
 		AggregationType.COUNT 	| adder(10)	| 20	 | 11
+		AggregationType.SUM 	| adder(10)	| 20l	 | 30l
+		AggregationType.COUNT 	| adder(10)	| 20l	 | 11l
 	}
 
 	@Unroll

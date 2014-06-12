@@ -15,6 +15,10 @@
  */
 package org.gerzog.jstataggr.core.manager.impl.internal;
 
+import javassist.CtClass;
+import javassist.CtMethod;
+
+import org.gerzog.jstataggr.core.templates.TemplateHelper;
 import org.gerzog.jstataggr.core.utils.FieldUtils;
 
 /**
@@ -23,7 +27,8 @@ import org.gerzog.jstataggr.core.utils.FieldUtils;
  */
 class StatisticsField extends AbstractStatisticsField {
 
-	public StatisticsField(final String originalFieldName, final Class<?> dataType) {
+	public StatisticsField(final String originalFieldName,
+			final Class<?> dataType) {
 		super(originalFieldName, dataType);
 	}
 
@@ -34,12 +39,25 @@ class StatisticsField extends AbstractStatisticsField {
 
 	@Override
 	protected Class<?> getAccessMethodType() {
-		return getDataType();
+		return getFieldType();
 	}
 
 	@Override
 	public boolean isAggregator() {
 		return false;
+	}
+
+	@Override
+	public void generate(final CtClass clazz) throws Exception {
+		super.generate(clazz);
+		generateSetter(clazz);
+	}
+
+	protected void generateSetter(final CtClass clazz) throws Exception {
+		final CtMethod method = CtMethod.make(TemplateHelper.setter(
+				getModifier(), generateFieldName(), getFieldType()), clazz);
+
+		clazz.addMethod(method);
 	}
 
 }

@@ -16,9 +16,9 @@
 package org.gerzog.jstataggr.core.manager.impl.internal;
 
 import javassist.CtClass;
-import javassist.CtMethod;
 
 import org.gerzog.jstataggr.AggregationType;
+import org.gerzog.jstataggr.FieldType;
 import org.gerzog.jstataggr.core.templates.TemplateHelper;
 import org.gerzog.jstataggr.core.utils.FieldUtils;
 
@@ -30,10 +30,13 @@ class AverageAggregationStatisticsField extends AggregationStatisticsField {
 
 	private final AbstractStatisticsField countField;
 
-	public AverageAggregationStatisticsField(final String fieldName, final Class<?> dataType, final AggregationType aggregationType) {
-		super(fieldName, dataType, aggregationType);
+	public AverageAggregationStatisticsField(final String fieldName,
+			final Class<?> dataType, final AggregationType aggregationType,
+			final FieldType fieldType) {
+		super(fieldName, dataType, aggregationType, fieldType);
 
-		countField = new AggregationStatisticsField("protected", generateFieldName(), getDataType(), AggregationType.COUNT);
+		countField = new AggregationStatisticsField("protected",
+				generateFieldName(), dataType, AggregationType.COUNT, fieldType);
 	}
 
 	@Override
@@ -43,20 +46,19 @@ class AverageAggregationStatisticsField extends AggregationStatisticsField {
 		super.generate(clazz);
 	}
 
-	@Override
-	protected CtMethod generateUpdater(final CtClass clazz) throws Exception {
-		final CtMethod updater = super.generateUpdater(clazz);
-
-		final String methodName = FieldUtils.getUpdaterName(countField.getFieldName(), AggregationType.COUNT);
-		final String paramName = generateFieldName();
-
-		updater.insertAfter(TemplateHelper.methodCall(methodName, paramName));
-
-		return updater;
-	}
-
+	// TODO: refactor this
 	@Override
 	protected String getUpdaterText() {
-		return TemplateHelper.averageUpdater(getModifier(), getFieldName(), getDataType());
+		final String averageUpdater = TemplateHelper.averageUpdater(
+				getModifier(), getFieldName(), getMethodType(), getFieldType());
+
+		final String methodName = FieldUtils.getUpdaterName(
+				countField.getFieldName(), AggregationType.COUNT);
+		final String paramName = generateFieldName();
+
+		final String countUpdater = TemplateHelper.methodCall(methodName,
+				paramName);
+
+		return averageUpdater.replace("}", "\n") + countUpdater + "}";
 	}
 }

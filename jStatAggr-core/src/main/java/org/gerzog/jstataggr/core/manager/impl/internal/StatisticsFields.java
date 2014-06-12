@@ -16,6 +16,7 @@
 package org.gerzog.jstataggr.core.manager.impl.internal;
 
 import org.gerzog.jstataggr.AggregationType;
+import org.gerzog.jstataggr.FieldType;
 
 /**
  * @author Nikolay Lagutko (nikolay.lagutko@mail.com)
@@ -31,16 +32,16 @@ public final class StatisticsFields {
 		return new StatisticsField(name, dataType);
 	}
 
-	public static IStatisticsField forAggregation(final String name, final Class<?> dataType, final AggregationType aggregationType) {
+	public static IStatisticsField forAggregation(final String name, final Class<?> dataType, final AggregationType aggregationType, final FieldType fieldType) {
 		switch (aggregationType) {
 		case MIN:
 		case MAX:
 		case SUM:
-			return new AggregationStatisticsField(name, dataType, aggregationType);
+			return new AggregationStatisticsField(name, dataType, aggregationType, fieldType);
 		case COUNT:
-			return new CountAggregationStatisticsField(name, dataType, aggregationType);
+			return new CountAggregationStatisticsField(name, dataType, aggregationType, fieldType);
 		case AVERAGE:
-			return new AverageAggregationStatisticsField(name, dataType, aggregationType);
+			return new AverageAggregationStatisticsField(name, dataType, aggregationType, fieldType);
 		default:
 			throw new IllegalStateException("Unsupported enum <" + aggregationType + ">");
 		}

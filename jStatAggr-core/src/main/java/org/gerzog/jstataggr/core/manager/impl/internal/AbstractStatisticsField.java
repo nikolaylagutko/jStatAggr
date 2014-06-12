@@ -36,29 +36,44 @@ abstract class AbstractStatisticsField implements IStatisticsField {
 
 	private final String originalFieldName;
 
-	private final Class<?> dataType;
+	private final Class<?> fieldType;
+
+	private final Class<?> methodType;
 
 	private final String modifier;
 
-	protected AbstractStatisticsField(final String originalFieldName, final Class<?> dataType) {
-		this("public", originalFieldName, dataType);
+	protected AbstractStatisticsField(final String modifier,
+			final String originalFieldName, final Class<?> methodType,
+			final Class<?> fieldType) {
+		this.originalFieldName = originalFieldName;
+		this.fieldType = fieldType;
+		this.modifier = modifier;
+		this.methodType = methodType;
 	}
 
-	protected AbstractStatisticsField(final String modifier, final String originalFieldName, final Class<?> dataType) {
-		this.originalFieldName = originalFieldName;
-		this.dataType = dataType;
-		this.modifier = modifier;
+	protected AbstractStatisticsField(final String originalFieldName,
+			final Class<?> methodType, final Class<?> fieldType) {
+		this("public", originalFieldName, methodType, fieldType);
+	}
+
+	protected AbstractStatisticsField(final String originalFieldName,
+			final Class<?> fieldType) {
+		this("public", originalFieldName, fieldType, fieldType);
+	}
+
+	protected AbstractStatisticsField(final String modifier,
+			final String originalFieldName, final Class<?> dataType) {
+		this(modifier, originalFieldName, dataType, dataType);
 	}
 
 	@Override
 	public void generate(final CtClass clazz) throws Exception {
 		generateField(clazz);
 		generateGetter(clazz);
-		generateSetter(clazz);
 	}
 
 	protected void generateField(final CtClass clazz) throws Exception {
-		final CtClass dataClazz = CLASS_POOL.get(dataType.getName());
+		final CtClass dataClazz = CLASS_POOL.get(fieldType.getName());
 
 		final CtField field = new CtField(dataClazz, generateFieldName(), clazz);
 
@@ -66,32 +81,39 @@ abstract class AbstractStatisticsField implements IStatisticsField {
 	}
 
 	protected void generateGetter(final CtClass clazz) throws Exception {
-		final CtMethod method = CtMethod.make(TemplateHelper.getter(modifier, generateFieldName(), dataType), clazz);
+		final CtMethod method = CtMethod.make(TemplateHelper.getter(modifier,
+				generateFieldName(), getGetterCastType(), fieldType), clazz);
 
 		clazz.addMethod(method);
 	}
 
-	protected void addField(final CtClass clazz, final CtField field) throws Exception {
+	protected Class<?> getGetterCastType() {
+		return methodType;
+	}
+
+	protected void addField(final CtClass clazz, final CtField field)
+			throws Exception {
 		clazz.addField(field);
-	}
-
-	protected void generateSetter(final CtClass clazz) throws Exception {
-		final CtMethod method = CtMethod.make(TemplateHelper.setter(modifier, generateFieldName(), dataType), clazz);
-
-		clazz.addMethod(method);
 	}
 
 	protected String generateFieldName() {
 		return originalFieldName;
 	}
 
-	protected Class<?> getDataType() {
-		return dataType;
+	protected Class<?> getFieldType() {
+		return fieldType;
 	}
 
 	@Override
-	public MethodHandle getAccessMethodHandle(final Class<?> clazz) throws Exception {
-		final Method method = clazz.getMethod(getAccessMethodName(), getAccessMethodType());
+	public Class<?> getMethodType() {
+		return methodType;
+	}
+
+	@Override
+	public MethodHandle getAccessMethodHandle(final Class<?> clazz)
+			throws Exception {
+		final Method method = clazz.getMethod(getAccessMethodName(),
+				getAccessMethodType());
 
 		return MethodHandles.lookup().unreflect(method);
 	}

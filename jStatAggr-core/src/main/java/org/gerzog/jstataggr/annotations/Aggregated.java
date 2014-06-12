@@ -41,6 +41,6 @@ public @interface Aggregated {
 	 */
 	public AggregationType[] value();
 
-	public FieldType fieldType() default FieldType.ACCUMULATOR;
+	public FieldType fieldType() default FieldType.ATOMIC;
 
 }
