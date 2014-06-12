@@ -13,6 +13,8 @@ buildscript {
 	}
 }
 
+apply plugin: 'release'
+
 subprojects {
 	apply plugin: 'java'
 	apply plugin: 'groovy'
