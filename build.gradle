@@ -13,7 +13,7 @@ buildscript {
 	}
 }
 
-apply plugin: 'grgit-release'
+apply plugin: 'release'
 
 subprojects {
 	apply plugin: 'java'
