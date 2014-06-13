@@ -1,3 +1,5 @@
+import org.ajoberstar.grgit.*
+
 buildscript {
 	repositories {
 		mavenCentral() 
@@ -6,12 +8,12 @@ buildscript {
 	
 	dependencies {
 		classpath group: 'nl.javadude.gradle.plugins',	name: 'license-gradle-plugin',	version: gradleLicenseVersion
-		classpath group: 'com.github.townsfolk',		name: 'gradle-release',			version: gradleReleaseVersion
+		classpath group: 'org.ajoberstar',				name: 'gradle-git',				version: gradleGitVersion
 		classpath group: 'com.jfrog.bintray.gradle',	name: 'gradle-bintray-plugin',	version: gradleBintrayVersion
 	}
 }
 
-apply plugin: 'release'
+apply plugin: 'grgit-release'
 
 subprojects {
 	apply plugin: 'java'
@@ -50,7 +52,17 @@ subprojects {
 }
 
 release {
-	requireBranch = 'java7'
+	println project.tasks
+	
+	grgit = Grgit.open(project.file('.'))
+//	remote = 'upstream'
+	prefixTagNameWithV = false
+	
+	releaseTasks = []
+	
+	version {
+		
+	}	
 }
 
 task wrapper(type: Wrapper) {
