@@ -16,6 +16,7 @@
 package org.gerzog.jstataggr.expressions.config
 
 import org.gerzog.jstataggr.core.expressions.IExpressionHandler
+import org.gerzog.jstataggr.el.test.TestBean;
 import org.gerzog.jstataggr.expressions.spel.SpelExpressionHandler
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration

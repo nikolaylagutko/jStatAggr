@@ -63,7 +63,6 @@ public class SpelExpressionHandler implements IExpressionHandler {
 
 	@PostConstruct
 	public void initialize() {
-
 		final StandardEvaluationContext context = new StandardEvaluationContext();
 		context.setBeanResolver(new BeanFactoryResolver(beanFactory));
 

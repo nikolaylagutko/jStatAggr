@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gerzog.jstataggr.expressions.config
+package org.gerzog.jstataggr.el.test
 
 /**
  * @author Nikolay Lagutko (nikolay.lagutko@mail.com)
