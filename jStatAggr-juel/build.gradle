@@ -1,3 +1,5 @@
+apply from: rootProject.file('bintray.gradle')
+
 dependencies {
 	compile project(':jStatAggr-core')
 	
