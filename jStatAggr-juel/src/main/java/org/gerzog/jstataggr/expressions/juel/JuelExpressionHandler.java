@@ -18,6 +18,7 @@ package org.gerzog.jstataggr.expressions.juel;
 import static org.apache.commons.lang3.Validate.notEmpty;
 import static org.apache.commons.lang3.Validate.notNull;
 
+import java.text.MessageFormat;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -33,6 +34,8 @@ import de.odysseus.el.util.SimpleContext;
  *
  */
 class JuelExpressionHandler implements IExpressionHandler {
+
+	private static final String EXPRESSION_TEMPLATE = "$'{'{0}'}'";
 
 	private ExpressionFactory expressionFactory;
 
@@ -56,7 +59,7 @@ class JuelExpressionHandler implements IExpressionHandler {
 
 		addVariable("this", originalValue);
 
-		return (T) expressionFactory.createValueExpression(getContext(), "${" + expression + "}", originalValue.getClass()).getValue(getContext());
+		return (T) expressionFactory.createValueExpression(getContext(), MessageFormat.format(EXPRESSION_TEMPLATE, expression), originalValue.getClass()).getValue(getContext());
 	}
 
 	public void initialize() {
