@@ -8,7 +8,9 @@ buildscript {
 	
 	dependencies {
 		classpath group: 'nl.javadude.gradle.plugins',	name: 'license-gradle-plugin',	version: gradleLicenseVersion
-		classpath group: 'com.github.townsfolk',		name: 'gradle-release',			version: gradleReleaseVersion
+		classpath group: 'au.com.ish.gradle',			name: 'release',				version: gradleReleaseVersion, {
+			exclude module: 'svnkit'
+		}
 		classpath group: 'com.jfrog.bintray.gradle',	name: 'gradle-bintray-plugin',	version: gradleBintrayVersion
 	}
 }
@@ -52,7 +54,10 @@ subprojects {
 }
 
 release {
-	requireBranch = 'java7'
+	scm = 'git'
+	allowLocalModifications = true
+	username = System.env.GIT_USERNAME
+	password = System.env.GIT_PASSWORD
 }
 
 task wrapper(type: Wrapper) {
