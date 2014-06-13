@@ -8,7 +8,7 @@ buildscript {
 	
 	dependencies {
 		classpath group: 'nl.javadude.gradle.plugins',	name: 'license-gradle-plugin',	version: gradleLicenseVersion
-		classpath group: 'org.ajoberstar',				name: 'gradle-git',				version: gradleGitVersion
+		classpath group: 'com.github.townsfolk',		name: 'gradle-release',			version: gradleReleaseVersion
 		classpath group: 'com.jfrog.bintray.gradle',	name: 'gradle-bintray-plugin',	version: gradleBintrayVersion
 	}
 }
@@ -52,17 +52,7 @@ subprojects {
 }
 
 release {
-	println project.tasks
-	
-	grgit = Grgit.open(project.file('.'))
-//	remote = 'upstream'
-	prefixTagNameWithV = false
-	
-	releaseTasks = []
-	
-	version {
-		
-	}	
+	requireBranch = 'java7'
 }
 
 task wrapper(type: Wrapper) {
