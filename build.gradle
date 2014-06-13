@@ -49,6 +49,10 @@ subprojects {
 	}
 }
 
+release {
+	requireBranch = 'java7'
+}
+
 task wrapper(type: Wrapper) {
 	gradleVersion = gradleWrapperVersion
 }
