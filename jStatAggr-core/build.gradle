@@ -30,17 +30,14 @@ def pomConfig = {
 publishing {
 	publications {
 		mavenJava(MavenPublication) {
-			artifactId 'core'
+			artifactId 'jstataggr-core'
 			
 			from components.java
 			artifact sourcesJar
 			artifact javadocJar
 			
 			pom.withXml {
-				def root = asNode()
-				
-				root.appendNode('description', 'Java library to simplify Statistics Aggregation')
-				root.children().last() + pomConfig
+				asNode().children().last() + pomConfig
 			}	
 		}
 	}
@@ -53,7 +50,7 @@ bintray {
 	publications = ['mavenJava']
 	
 	pkg {
-		repo = 'statistics-aggregator'
+		repo = 'gerzog-java-libraries'
 		name = 'jStatAggr'
 		desc = 'Statistics Aggregator'
 		licenses = ['Apache-2.0']
@@ -62,4 +59,8 @@ bintray {
 	dryRun = version.endsWith("SNAPSHOT")
 }
 
-bintrayUpload.dependsOn jar
+task install(dependsOn: 'publishMavenJavaPublicationToMavenLocal') << {
+    logger.info "Installing $project.name"
+}
+
+bintrayUpload.dependsOn install
