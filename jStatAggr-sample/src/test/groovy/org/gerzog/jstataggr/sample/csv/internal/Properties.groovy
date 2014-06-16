@@ -13,13 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gerzog.jstataggr.expressions.config
+package org.gerzog.jstataggr.sample.csv.internal
+
+import org.apache.commons.lang3.time.DateUtils
 
 /**
  * @author Nikolay Lagutko (nikolay.lagutko@mail.com)
  *
  */
-class TestBean {
+public class Properties implements IProperties {
 
-	int value = 10
+	@Override
+	public long getTimestampFactor() {
+		DateUtils.MILLIS_PER_SECOND
+	}
 }

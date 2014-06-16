@@ -16,56 +16,34 @@
 package org.gerzog.jstataggr.expressions.spel
 
 import org.gerzog.jstataggr.core.expressions.IExpressionHandler
+import org.gerzog.jstataggr.el.test.AbstractExpressionHandlerSpec
 import org.gerzog.jstataggr.expressions.config.TestContext
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
-
-import spock.lang.Specification
-import spock.lang.Unroll
 
 /**
  * @author Nikolay Lagutko (nikolay.lagutko@mail.com)
  *
  */
 @ContextConfiguration(classes = [TestContext.class])
-class SpelExpressionHandlerSpec extends Specification {
+class SpelExpressionHandlerSpec extends AbstractExpressionHandlerSpec {
 
 	@Autowired
 	IExpressionHandler handler
 
-	@Unroll
-	def "check expression handling"(def expression, def value, def expected) {
-		when:
-		def result = handler.invokeExpression(expression, value)
 
-		then:
-		result == expected
-
-		where:
-		expression 				| value | expected
-		'1 + 1'					| 10	| 2
-		'#this + 5'				| 10	| 15
-		'#this + @bean.value'	| 10	| 20
+	@Override
+	public IExpressionHandler getExpressionHandler() {
+		handler
 	}
 
-	def "check an error occured when value is null"() {
-		when:
-		handler.invokeExpression('1 + 1', null)
-
-		then:
-		thrown(NullPointerException)
+	@Override
+	public String getThis() {
+		'#this'
 	}
 
-	def "check an error occured when expression is null or empty"(def expression, def exception) {
-		when:
-		handler.invokeExpression(expression, 10)
-
-		then:
-		thrown(exception)
-
-		where:
-		expression | exception
-		null	   | NullPointerException
-		''		   | IllegalArgumentException
+	@Override
+	public String getBean(String beanName) {
+		"@${beanName}"
 	}
 }

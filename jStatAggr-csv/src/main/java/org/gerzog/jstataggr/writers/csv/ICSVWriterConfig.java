@@ -13,17 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gerzog.jstataggr;
+package org.gerzog.jstataggr.writers.csv;
 
-import java.util.Collection;
+import java.util.Comparator;
+import java.util.List;
+
+import org.apache.commons.collections4.ComparatorUtils;
 
 /**
  * @author Nikolay Lagutko (nikolay.lagutko@mail.com)
  *
  */
-public interface IStatisticsWriter {
+public interface ICSVWriterConfig {
 
-	void writeStatistics(String statisticsName,
-			Collection<Object> statisticsData) throws Exception;
+	public static final Comparator<String> DEFAULT_COMPARATOR = ComparatorUtils
+			.naturalComparator();
+
+	String getFilename(String statisticsName, Object statisticsData);
+
+	List<String> getExcludedFields();
+
+	boolean isApplied(String statisticsName);
+
+	Comparator<String> getFieldComparator();
 
 }

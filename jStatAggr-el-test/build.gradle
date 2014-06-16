@@ -1,0 +1,7 @@
+dependencies {
+	compile project(':jStatAggr-core')
+	
+	compile group: 'org.codehaus.groovy',	name: 'groovy-all',		version: groovyVersion
+	compile group: 'org.spockframework',	name: 'spock-core',		version: spockVersion
+	compile group: 'junit',					name: 'junit-dep',		version: junitVersion
+}

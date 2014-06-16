@@ -1,8 +1,11 @@
+apply from: rootProject.file('bintray.gradle')
+
 dependencies {
 	compile project(':jStatAggr-core')
 	
 	compile group: 'org.springframework',	name: 'spring-context',	version: springVersion
 	
+	testCompile project(':jStatAggr-el-test')
 	testCompile group: 'org.springframework',	name: 'spring-test',	version: springVersion
 	testCompile group: 'org.spockframework',	name: 'spock-spring',	version: spockVersion
 }

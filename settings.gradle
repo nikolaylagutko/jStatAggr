@@ -2,4 +2,5 @@ include 'jStatAggr-core',
 		'jStatAggr-csv', 
 		'jStatAggr-sample',  
 		'jStatAggr-spel', 
-		'jStatAggr-juel'
+		'jStatAggr-juel',
+		'jStatAggr-el-test'

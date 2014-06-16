@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C)2014 - Nikolay Lagutko <nikolay.lagutko@mail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,17 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gerzog.jstataggr;
-
-import java.util.Collection;
+package org.gerzog.jstataggr.el.test
 
 /**
  * @author Nikolay Lagutko (nikolay.lagutko@mail.com)
  *
  */
-public interface IStatisticsWriter {
+class TestBean {
 
-	void writeStatistics(String statisticsName,
-			Collection<Object> statisticsData) throws Exception;
-
+	int value = 10
 }

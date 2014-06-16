@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C)2014 - Nikolay Lagutko <nikolay.lagutko@mail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,17 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gerzog.jstataggr;
+package org.gerzog.jstataggr.sample.csv.internal
 
-import java.util.Collection;
+import org.gerzog.jstataggr.AggregationType
+import org.gerzog.jstataggr.annotations.Aggregated
+import org.gerzog.jstataggr.annotations.Expression
+import org.gerzog.jstataggr.annotations.StatisticsEntry
+import org.gerzog.jstataggr.annotations.StatisticsKey
 
 /**
  * @author Nikolay Lagutko (nikolay.lagutko@mail.com)
  *
  */
-public interface IStatisticsWriter {
+@StatisticsEntry
+class Statistics {
 
-	void writeStatistics(String statisticsName,
-			Collection<Object> statisticsData) throws Exception;
+	@StatisticsKey
+	@Expression('#this / @properties.timestampFactor')
+	long timestamp
 
+	@StatisticsKey
+	String key
+
+	@Aggregated(AggregationType.SUM)
+	long value
 }

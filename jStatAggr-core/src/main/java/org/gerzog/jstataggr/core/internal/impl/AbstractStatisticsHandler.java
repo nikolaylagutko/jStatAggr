@@ -62,7 +62,8 @@ public abstract class AbstractStatisticsHandler implements IStatisticsHandler {
 
 		final Class<?> clazz = statisticsEntry.getClass();
 
-		final StatisticsEntry annotation = clazz.getAnnotation(StatisticsEntry.class);
+		final StatisticsEntry annotation = clazz
+				.getAnnotation(StatisticsEntry.class);
 
 		final String className = clazz.getSimpleName();
 
@@ -76,13 +77,15 @@ public abstract class AbstractStatisticsHandler implements IStatisticsHandler {
 		});
 	}
 
-	private void updateStatistics(final Object statisticsEntry, final String statisticsName) {
+	private void updateStatistics(final Object statisticsEntry,
+			final String statisticsName) {
 		notNull(manager, "Statistics Manager cannot be null");
 
 		manager.updateStatistics(statisticsEntry, statisticsName);
 	}
 
-	private String getStatisticsName(final StatisticsEntry entry, final String className) {
+	private String getStatisticsName(final StatisticsEntry entry,
+			final String className) {
 		final String entryName = entry.value();
 
 		return StringUtils.isEmpty(entryName) ? className : entryName;
@@ -91,24 +94,28 @@ public abstract class AbstractStatisticsHandler implements IStatisticsHandler {
 	protected abstract void handleStatistics(Runnable action);
 
 	@Override
-	public void writeStatistics(final boolean cleanup) {
+	public void writeStatistics(final boolean cleanup) throws Exception {
 		writeStatistics(null, IStatisticsFilter.ALL_FILTER, cleanup);
-
 	}
 
 	@Override
-	public void writeStatistics(final String statisticsName, final boolean cleanup) {
+	public void writeStatistics(final String statisticsName,
+			final boolean cleanup) throws Exception {
 		writeStatistics(statisticsName, IStatisticsFilter.ALL_FILTER, cleanup);
 	}
 
 	@Override
-	public void writeStatistics(final String statisticsName, final IStatisticsFilter filter, final boolean cleanup) {
+	public void writeStatistics(final String statisticsName,
+			final IStatisticsFilter filter, final boolean cleanup)
+					throws Exception {
 		notNull(manager, "Statistics Manager cannot be null");
 
 		if (writers != null) {
-			final Map<String, Collection<Object>> result = manager.collectStatistics(statisticsName, filter, cleanup);
+			final Map<String, Collection<Object>> result = manager
+					.collectStatistics(statisticsName, filter, cleanup);
 
-			for (final Entry<String, Collection<Object>> entry : result.entrySet()) {
+			for (final Entry<String, Collection<Object>> entry : result
+					.entrySet()) {
 				for (final IStatisticsWriter writer : writers) {
 					writer.writeStatistics(entry.getKey(), entry.getValue());
 				}
