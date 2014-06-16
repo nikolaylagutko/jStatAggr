@@ -16,11 +16,19 @@
 package org.gerzog.jstataggr;
 
 /**
+ * Represents a key for a bucket of statistics data
+ *
  * @author Nikolay Lagutko (nikolay.lagutko@mail.com)
  *
  */
 public interface IStatisticsKey {
 
+	/**
+	 * Returns a value of key by provided property name
+	 *
+	 * @param name
+	 *            - name of property
+	 */
 	Object get(String name);
 
 }

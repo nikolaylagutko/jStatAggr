@@ -21,9 +21,9 @@ package org.gerzog.jstataggr;
  * @author Nikolay Lagutko (nikolay.lagutko@mail.com)
  */
 public enum AggregationType {
+
 	/*
-	 * Will be aggregated only count of events (in case of array/collections it
-	 * will be called corresponding method)
+	 * Will be aggregated only count of events (in case of array/collections it will be called corresponding method)
 	 */
 	COUNT,
 	/*

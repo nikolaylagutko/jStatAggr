@@ -41,6 +41,9 @@ public @interface Aggregated {
 	 */
 	public AggregationType[] value();
 
+	/**
+	 * Type of aggregation field. Default is {@link FieldType#ATOMIC}
+	 */
 	public FieldType fieldType() default FieldType.ATOMIC;
 
 }
