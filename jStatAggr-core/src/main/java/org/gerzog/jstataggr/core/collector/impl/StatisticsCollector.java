@@ -60,7 +60,8 @@ public class StatisticsCollector {
 
 		private MethodHandle accessor;
 
-		public FieldInfo(final String name, final String expression, final MethodHandle getter) {
+		public FieldInfo(final String name, final String expression,
+				final MethodHandle getter) {
 			this.name = name;
 			this.expression = expression;
 			this.getter = getter;
@@ -95,27 +96,41 @@ public class StatisticsCollector {
 
 		private final Map<IStatisticsField, FieldInfo> statisticsFieldInfo = new HashMap<>();
 
-		public StatisticsCollectorBuilder(final String className, final IExpressionHandler expressionHandler) {
+		public StatisticsCollectorBuilder(final String className,
+				final IExpressionHandler expressionHandler) {
 			this.result = new StatisticsCollector(expressionHandler);
 			this.className = className;
 		}
 
-		public StatisticsCollectorBuilder addStatisticsKey(final Field field, final MethodHandle getter, final String expression) {
+		public StatisticsCollectorBuilder addStatisticsKey(final Field field,
+				final MethodHandle getter, final String expression) {
 
-			add(field.getName(), expression, StatisticsFields.forStatisticsKey(field.getName(), field.getType()), getter);
+			add(field.getName(),
+					expression,
+					StatisticsFields.forStatisticsKey(field.getName(),
+							field.getType()), getter);
 
 			return this;
 		}
 
-		public StatisticsCollectorBuilder addAggregation(final Field field, final AggregationType[] aggregationTypes, final FieldType fieldType, final MethodHandle getter, final String expression) {
+		public StatisticsCollectorBuilder addAggregation(final Field field,
+				final AggregationType[] aggregationTypes,
+				final FieldType fieldType, final MethodHandle getter,
+				final String expression) {
 			for (final AggregationType type : aggregationTypes) {
-				add(field.getName(), expression, StatisticsFields.forAggregation(field.getName(), field.getType(), type, fieldType), getter);
+				add(field.getName(),
+						expression,
+						StatisticsFields.forAggregation(field.getName(),
+								field.getType(), type, fieldType), getter);
 			}
 
 			return this;
 		}
 
-		private StatisticsCollectorBuilder add(final String name, final String expression, final IStatisticsField statisticsField, final MethodHandle getter) {
+		private StatisticsCollectorBuilder add(final String name,
+				final String expression,
+				final IStatisticsField statisticsField,
+				final MethodHandle getter) {
 			final FieldInfo fieldInfo = new FieldInfo(name, expression, getter);
 
 			statisticsFieldInfo.put(statisticsField, fieldInfo);
@@ -168,7 +183,8 @@ public class StatisticsCollector {
 
 		public void setExternalEntityClass(final Class<?> externalEntityClass) {
 			this.externalEntityClass = externalEntityClass;
-			this.externalEntityConverter = BeanCopier.create(bucketClass, externalEntityClass, false);
+			this.externalEntityConverter = BeanCopier.create(bucketClass,
+					externalEntityClass, false);
 		}
 
 	}
@@ -195,20 +211,26 @@ public class StatisticsCollector {
 
 	private Object convert(final Object input) {
 		try {
-			final Object externalEntity = classInfo.getExternalEntityClass().newInstance();
+			final Object externalEntity = classInfo.getExternalEntityClass()
+					.newInstance();
 
-			classInfo.getExternalEntityConverter().copy(input, externalEntity, null);
+			classInfo.getExternalEntityConverter().copy(input, externalEntity,
+					null);
 
 			return externalEntity;
 		} catch (final Throwable e) {
-			throw new RuntimeException("Unable to convert statistics <" + input + "> to external entity", e);
+			throw new RuntimeException("Unable to convert statistics <" + input
+					+ "> to external entity", e);
 		}
 	}
 
-	protected static CollectorClassInfo generateClassInfo(final String className, final Map<IStatisticsField, FieldInfo> fieldInfo) throws Throwable {
+	protected static CollectorClassInfo generateClassInfo(
+			final String className,
+			final Map<IStatisticsField, FieldInfo> fieldInfo) throws Throwable {
 		final ClassPool pool = ClassPool.getDefault();
 
-		final CtClass clazz = pool.makeClass(PACKAGE_PREFIX + StringUtils.capitalize(className));
+		final CtClass clazz = pool.makeClass(PACKAGE_PREFIX
+				+ StringUtils.capitalize(className));
 
 		for (final IStatisticsField info : fieldInfo.keySet()) {
 			info.generate(clazz);
@@ -217,14 +239,17 @@ public class StatisticsCollector {
 		return generateClassInfo(clazz.toClass(), fieldInfo);
 	}
 
-	protected static CollectorClassInfo generateClassInfo(final Class<?> clazz, final Map<IStatisticsField, FieldInfo> fieldInfo) throws Throwable {
+	protected static CollectorClassInfo generateClassInfo(final Class<?> clazz,
+			final Map<IStatisticsField, FieldInfo> fieldInfo) throws Throwable {
 		final CollectorClassInfo result = new CollectorClassInfo(clazz);
 		final Map<String, Class<?>> methodInfo = new HashMap<>();
 
-		for (final Entry<IStatisticsField, FieldInfo> entry : fieldInfo.entrySet()) {
+		for (final Entry<IStatisticsField, FieldInfo> entry : fieldInfo
+				.entrySet()) {
 			final IStatisticsField statisticsInfo = entry.getKey();
 			final FieldInfo bucketInfo = entry.getValue();
-			final MethodHandle accessMethod = statisticsInfo.getAccessMethodHandle(clazz);
+			final MethodHandle accessMethod = statisticsInfo
+					.getAccessMethodHandle(clazz);
 
 			bucketInfo.setAccessor(accessMethod);
 
@@ -234,13 +259,15 @@ public class StatisticsCollector {
 				result.getKeys().put(bucketInfo.getName(), bucketInfo);
 			}
 
-			methodInfo.put(statisticsInfo.getFieldName(), statisticsInfo.getMethodType());
+			methodInfo.put(statisticsInfo.getFieldName(),
+					statisticsInfo.getMethodType());
 		}
 
 		final BeanGenerator externalBeanGenerator = new BeanGenerator();
 		BeanGenerator.addProperties(externalBeanGenerator, methodInfo);
 
-		result.setExternalEntityClass((Class<?>) externalBeanGenerator.createClass());
+		result.setExternalEntityClass((Class<?>) externalBeanGenerator
+				.createClass());
 
 		return result;
 	}
@@ -251,7 +278,8 @@ public class StatisticsCollector {
 		updateStatistics(statisticsBucket, statisticsData);
 	}
 
-	protected void updateStatistics(final Object statisticsBucket, final Object statisticsData) throws Throwable {
+	protected void updateStatistics(final Object statisticsBucket,
+			final Object statisticsData) throws Throwable {
 		for (final FieldInfo updater : classInfo.getUpdaters()) {
 			Object value = updater.getGetter().invoke(statisticsData);
 
@@ -261,7 +289,8 @@ public class StatisticsCollector {
 		}
 	}
 
-	protected Object getStatisticsBucket(final Object statisticsData) throws Throwable {
+	protected Object getStatisticsBucket(final Object statisticsData)
+			throws Throwable {
 		final IStatisticsKey key = generateStatisticsKey(statisticsData);
 
 		Object statisticsBucket = statistics.get(key);
@@ -273,10 +302,12 @@ public class StatisticsCollector {
 		return statisticsBucket;
 	}
 
-	protected IStatisticsKey generateStatisticsKey(final Object statisticsData) throws Throwable {
+	protected IStatisticsKey generateStatisticsKey(final Object statisticsData)
+			throws Throwable {
 		final StatisticsKeyBuilder builder = new StatisticsKeyBuilder();
 
-		for (final Entry<String, FieldInfo> entry : classInfo.getKeys().entrySet()) {
+		for (final Entry<String, FieldInfo> entry : classInfo.getKeys()
+				.entrySet()) {
 			final String name = entry.getKey();
 			final FieldInfo handles = entry.getValue();
 			Object value = handles.getGetter().invoke(statisticsData);
@@ -289,16 +320,16 @@ public class StatisticsCollector {
 		return builder.build();
 	}
 
-	protected Object generateStatisticsBucket(final IStatisticsKey key, final Object statisticsData) throws Throwable {
+	protected Object generateStatisticsBucket(final IStatisticsKey key,
+			final Object statisticsData) throws Throwable {
 		final Object result = classInfo.getBucketClass().newInstance();
 
-		for (final Entry<String, FieldInfo> entry : classInfo.getKeys().entrySet()) {
+		for (final Entry<String, FieldInfo> entry : classInfo.getKeys()
+				.entrySet()) {
 			final String name = entry.getKey();
 			final FieldInfo handles = entry.getValue();
 
-			Object value = key.get(name);
-
-			value = updateValue(value, handles.getExpression());
+			final Object value = key.get(name);
 
 			handles.getAccessor().invoke(result, value);
 		}
@@ -312,21 +343,25 @@ public class StatisticsCollector {
 		return statistics;
 	}
 
-	public Collection<Object> collectStatistics(final IStatisticsFilter filter, final boolean cleanup) {
+	public Collection<Object> collectStatistics(final IStatisticsFilter filter,
+			final boolean cleanup) {
 		final Collection<Object> result = new ArrayList<>();
 
 		for (final IStatisticsKey key : statistics.keySet()) {
 			if (filter.isApplied(key)) {
-				final Object data = cleanup ? statistics.remove(key) : statistics.get(key);
+				final Object data = cleanup ? statistics.remove(key)
+						: statistics.get(key);
 
 				result.add(data);
 			}
 		}
 
-		return CollectionUtils.transformingCollection(result, exportTransformer);
+		return CollectionUtils
+				.transformingCollection(result, exportTransformer);
 	}
 
-	protected Object updateValue(final Object original, final String expression) throws Exception {
+	protected Object updateValue(final Object original, final String expression)
+			throws Exception {
 		if ((expressionHandler != null) && (expression != null)) {
 			return expressionHandler.invokeExpression(expression, original);
 		}
