@@ -318,9 +318,7 @@ public class StatisticsCollector {
 
 			classInfo.getKeys().forEach((name, handles) -> {
 				propogate(() -> {
-					Object value = key.get(name);
-
-					value = updateValue(value, handles.getExpression());
+					final Object value = key.get(name);
 
 					handles.getAccessor().invoke(result, value);
 				});

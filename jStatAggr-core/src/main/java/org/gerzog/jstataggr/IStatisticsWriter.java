@@ -23,6 +23,7 @@ import java.util.Collection;
  */
 public interface IStatisticsWriter {
 
-	void writeStatistics(String statisticsName, Collection<Object> statisticsData);
+	void writeStatistics(String statisticsName,
+			Collection<Object> statisticsData) throws Exception;
 
 }

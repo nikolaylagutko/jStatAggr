@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C)2014 - Nikolay Lagutko <nikolay.lagutko@mail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,30 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gerzog.jstataggr.writers.csv;
+package org.gerzog.jstataggr.sample.csv.internal
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-
-import org.apache.commons.collections4.ComparatorUtils;
+import org.apache.commons.lang3.time.DateUtils
 
 /**
  * @author Nikolay Lagutko (nikolay.lagutko@mail.com)
  *
  */
-public interface ICSVWriterConfig {
+public class Properties implements IProperties {
 
-	String getFilename(String statisticsName, Object statisticsData);
-
-	default List<String> getExcludedFields() {
-		return new ArrayList<>(0);
+	@Override
+	public long getTimestampFactor() {
+		DateUtils.MILLIS_PER_SECOND
 	}
-
-	boolean isApplied(String statisticsName);
-
-	default Comparator<String> getFieldComparator() {
-		return ComparatorUtils.naturalComparator();
-	}
-
 }

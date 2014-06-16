@@ -30,12 +30,15 @@ public interface IStatisticsHandler {
 	 */
 	void handleStatistics(Object statisticsEntry);
 
-	void writeStatistics(boolean cleanup);
+	void writeStatistics(boolean cleanup) throws Exception;
 
-	void writeStatistics(String statisticsName, boolean cleanup);
+	void writeStatistics(String statisticsName, boolean cleanup)
+			throws Exception;
 
-	void writeStatistics(String statisticsName, IStatisticsFilter filter, boolean cleanup);
+	void writeStatistics(String statisticsName, IStatisticsFilter filter,
+			boolean cleanup) throws Exception;
 
-	void setStatisticsWriters(Collection<IStatisticsWriter> writers);
+	void setStatisticsWriters(Collection<IStatisticsWriter> writers)
+			throws Exception;
 
 }

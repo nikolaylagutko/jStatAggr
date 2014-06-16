@@ -1,3 +1,8 @@
 dependencies {
 	compile project(':jStatAggr-core')
+	compile project(':jStatAggr-csv')
+	compile project(':jStatAggr-spel')
+	
+	testCompile group: 'org.springframework',	name: 'spring-test',	version: springVersion
+	testCompile group: 'org.spockframework',	name: 'spock-spring',	version: spockVersion
 }

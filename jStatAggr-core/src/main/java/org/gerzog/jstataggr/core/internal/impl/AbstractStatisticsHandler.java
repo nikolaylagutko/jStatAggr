@@ -19,6 +19,7 @@ import static org.apache.commons.lang3.Validate.isTrue;
 import static org.apache.commons.lang3.Validate.notNull;
 
 import java.util.Collection;
+import java.util.Map.Entry;
 
 import org.apache.commons.lang3.StringUtils;
 import org.gerzog.jstataggr.IStatisticsFilter;
@@ -60,22 +61,26 @@ public abstract class AbstractStatisticsHandler implements IStatisticsHandler {
 
 		final Class<?> clazz = statisticsEntry.getClass();
 
-		final StatisticsEntry annotation = clazz.getAnnotation(StatisticsEntry.class);
+		final StatisticsEntry annotation = clazz
+				.getAnnotation(StatisticsEntry.class);
 
 		final String className = clazz.getSimpleName();
 
 		isTrue(annotation != null, NO_ANNOTATION_MESSAGE, className);
 
-		handleStatistics(() -> updateStatistics(statisticsEntry, getStatisticsName(annotation, className)));
+		handleStatistics(() -> updateStatistics(statisticsEntry,
+				getStatisticsName(annotation, className)));
 	}
 
-	private void updateStatistics(final Object statisticsEntry, final String statisticsName) {
+	private void updateStatistics(final Object statisticsEntry,
+			final String statisticsName) {
 		notNull(manager, "Statistics Manager cannot be null");
 
 		manager.updateStatistics(statisticsEntry, statisticsName);
 	}
 
-	private String getStatisticsName(final StatisticsEntry entry, final String className) {
+	private String getStatisticsName(final StatisticsEntry entry,
+			final String className) {
 		final String entryName = entry.value();
 
 		return StringUtils.isEmpty(entryName) ? className : entryName;
@@ -84,24 +89,31 @@ public abstract class AbstractStatisticsHandler implements IStatisticsHandler {
 	protected abstract void handleStatistics(Runnable action);
 
 	@Override
-	public void writeStatistics(final boolean cleanup) {
+	public void writeStatistics(final boolean cleanup) throws Exception {
 		writeStatistics(null, (key) -> true, cleanup);
 
 	}
 
 	@Override
-	public void writeStatistics(final String statisticsName, final boolean cleanup) {
+	public void writeStatistics(final String statisticsName,
+			final boolean cleanup) throws Exception {
 		writeStatistics(statisticsName, (key) -> true, cleanup);
 	}
 
 	@Override
-	public void writeStatistics(final String statisticsName, final IStatisticsFilter filter, final boolean cleanup) {
+	public void writeStatistics(final String statisticsName,
+			final IStatisticsFilter filter, final boolean cleanup)
+					throws Exception {
 		notNull(manager, "Statistics Manager cannot be null");
 
 		if (writers != null) {
-			manager.collectStatistics(statisticsName, filter, cleanup).forEach((name, data) -> {
-				writers.forEach(writer -> writer.writeStatistics(name, data));
-			});
+			for (final Entry<String, Collection<Object>> entry : manager
+					.collectStatistics(statisticsName, filter, cleanup)
+					.entrySet()) {
+				for (final IStatisticsWriter writer : writers) {
+					writer.writeStatistics(entry.getKey(), entry.getValue());
+				}
+			}
 		}
 	}
 

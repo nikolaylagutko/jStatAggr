@@ -2,4 +2,5 @@ dependencies {
 	compile project(':jStatAggr-core')
 	
 	compile group: 'net.sf.supercsv',	name: 'super-csv',	version: supercsvVersion
+	compile group: 'commons-io',		name: 'commons-io',	version: commonsIOVersion
 }
