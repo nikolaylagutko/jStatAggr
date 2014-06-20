@@ -19,13 +19,33 @@ import java.util.Collection;
 import java.util.Map;
 
 /**
+ * Main entry point to work with statistics collectors
+ *
  * @author Nikolay Lagutko (nikolay.lagutko@mail.com)
  *
  */
 public interface IStatisticsManager {
 
+	/**
+	 * Updated statistics collector data
+	 *
+	 * @param statisticsEntry
+	 *            - new piece of data to update statistics
+	 * @param statisticsName
+	 *            - name of statistics
+	 */
 	void updateStatistics(Object statisticsEntry, String statisticsName);
 
+	/**
+	 * Collects corresponding statistics data
+	 * 
+	 * @param statisticsName
+	 *            - name of statistics to collect
+	 * @param filter
+	 *            - additional filtering that should be applied for statistics data
+	 * @param cleanup
+	 *            - should collected statistics be removed
+	 */
 	Map<String, Collection<Object>> collectStatistics(String statisticsName, IStatisticsFilter filter, boolean cleanup);
 
 }

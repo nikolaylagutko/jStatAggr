@@ -18,8 +18,7 @@ package org.gerzog.jstataggr;
 import java.util.Collection;
 
 /**
- * Main entry point to handle Statistics. Updates aggregated statistics data for
- * each annotated class.
+ * Main entry point to handle Statistics. Updates aggregated statistics data for each annotated class.
  *
  * @author Nikolay Lagutko (nikolay.lagutko@mail.com)
  */
@@ -30,15 +29,39 @@ public interface IStatisticsHandler {
 	 */
 	void handleStatistics(Object statisticsEntry);
 
+	/**
+	 * Collects all available statistics and send it to StatisticsWriters
+	 *
+	 * @param cleanup
+	 *            - should written statistics be removed from collected statistics
+	 */
 	void writeStatistics(boolean cleanup) throws Exception;
 
-	void writeStatistics(String statisticsName, boolean cleanup)
-			throws Exception;
+	/**
+	 * Collects statistics by it's name and send it to StatisticsWriters
+	 *
+	 * @param statisticsName
+	 *            - name of statistics ({@link org.gerzog.jstataggr.annotations.StatisticsEntry#value()})
+	 * @param cleanup
+	 *            - should written statistics be removed from collected statistics
+	 */
+	void writeStatistics(String statisticsName, boolean cleanup) throws Exception;
 
-	void writeStatistics(String statisticsName, IStatisticsFilter filter,
-			boolean cleanup) throws Exception;
+	/**
+	 * Collects statistics by it's name and provided filter and send it to StatisticsWriters
+	 *
+	 * @param statisticsName
+	 *            - name of statistics ({@link org.gerzog.jstataggr.annotations.StatisticsEntry#value()})
+	 * @param filter
+	 *            - filter for statistics collection
+	 * @param cleanup
+	 *            - should written statistics be removed from collected statistics
+	 */
+	void writeStatistics(String statisticsName, IStatisticsFilter filter, boolean cleanup) throws Exception;
 
-	void setStatisticsWriters(Collection<IStatisticsWriter> writers)
-			throws Exception;
+	/**
+	 * Registers statistics writers
+	 */
+	void setStatisticsWriters(Collection<IStatisticsWriter> writers) throws Exception;
 
 }

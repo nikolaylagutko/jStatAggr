@@ -16,6 +16,8 @@
 package org.gerzog.jstataggr;
 
 /**
+ * Describes a filter for Statistics
+ *
  * @author Nikolay Lagutko (nikolay.lagutko@mail.com)
  *
  */
@@ -29,6 +31,12 @@ public interface IStatisticsFilter {
 		}
 	};
 
+	/**
+	 * Is piece of aggregated statistics represented by key is applied to filter rules
+	 *
+	 * @param statisticsKey
+	 *            - statistics key
+	 */
 	boolean isApplied(IStatisticsKey statisticsKey);
 
 }

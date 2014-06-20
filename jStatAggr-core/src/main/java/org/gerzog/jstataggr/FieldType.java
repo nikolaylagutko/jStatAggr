@@ -16,10 +16,20 @@
 package org.gerzog.jstataggr;
 
 /**
+ * Defines a type of aggregated value
+ *
  * @author Nikolay Lagutko (nikolay.lagutko@mail.com)
  *
  */
 public enum FieldType {
-	PRIMITIVE, ATOMIC;
+	/**
+	 * A primitive (long/int) types will be used for aggregation
+	 */
+	PRIMITIVE,
+
+	/**
+	 * Atomic types (AtomicLong/AtomicInteger) will be used for aggregation
+	 */
+	ATOMIC;
 
 }

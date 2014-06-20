@@ -18,12 +18,21 @@ package org.gerzog.jstataggr;
 import java.util.Collection;
 
 /**
+ * Represents a Writer of collected statistics
+ *
  * @author Nikolay Lagutko (nikolay.lagutko@mail.com)
  *
  */
 public interface IStatisticsWriter {
 
-	void writeStatistics(String statisticsName,
-			Collection<Object> statisticsData) throws Exception;
+	/**
+	 * Writes collected statistics
+	 *
+	 * @param statisticsName
+	 *            - name of statistics
+	 * @param statisticsData
+	 *            - collected data to write
+	 */
+	void writeStatistics(String statisticsName, Collection<Object> statisticsData) throws Exception;
 
 }

@@ -21,6 +21,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
+ * Mark a field to be processed by any EL-engine
+ *
  * @author Nikolay Lagutko (nikolay.lagutko@mail.com)
  *
  */
@@ -28,6 +30,9 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Expression {
 
+	/**
+	 * Expression to be calculated
+	 */
 	String value();
 
 }
