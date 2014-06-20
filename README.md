@@ -77,7 +77,7 @@ dependencies {
 ```
 
 jStatAggr have two parallel branches - one is for full Java8 support and another one is adapted for Java7, both versions available on jcenter. 
-Current versions are: _0.1.0-java7_ and _0.1.0-java8_
+Current versions are: _0.2.0-java7_ and _0.2.0-java8_
 
 ### View collected statistics
 
