@@ -26,8 +26,14 @@ public interface IStatisticsFilter {
 	/**
 	 * Filter to apply all available statistics data
 	 */
-	public IStatisticsFilter ALL_FILTER = statisticsKey -> true;
+	public IStatisticsFilter ALL_FILTER = new IStatisticsFilter() {
 
+		@Override
+		public boolean isApplied(final IStatisticsKey statisticsKey) {
+			return true;
+		}
+	};
+	
 	/**
 	 * Is piece of aggregated statistics represented by key is applied to filter rules
 	 *
