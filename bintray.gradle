@@ -23,7 +23,7 @@ def pomConfig = {
 publishing {
 	publications {
 		mavenJava(MavenPublication) {
-			artifactId name.toLowerCase()
+			artifactId project.name.toLowerCase()
 			
 			from components.java
 			artifact sourcesJar
