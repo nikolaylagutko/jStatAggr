@@ -3,5 +3,6 @@
 .settings
 .project
 .groovy
+.eclipse-pmd
 /build
 /bin
